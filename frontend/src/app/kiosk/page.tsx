@@ -11,15 +11,34 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCheckIn } from "@/features/check-in/hooks/useCheckIn";
 
 const keypad = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "CLR"];
+const packageBenefits: Record<string, string[]> = {
+  "Individual Student": ["Free Trainer Assistance", "Experienced Coaches", "Clean & Safe Facility", "Top-Notch Equipment"],
+  "Individual Professional": ["Free Trainer Assistance", "Experienced Coaches", "Clean & Safe Facility", "Top-Notch Equipment"],
+  "Walk-in": ["Single session access", "Clean & Safe Facility", "Top-Notch Equipment"],
+  "Barkada Group of 3 Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+  "Barkada Group of 3 Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+  "Barkada Group of 5 Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+  "Barkada Group of 5 Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+  "Barkada Group 6+ Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+  "Barkada Group 6+ Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
+};
+
+const getExpiryDate = (member: { startedAt: string; packageDays: number }) => {
+  const expiry = new Date(member.startedAt);
+  expiry.setDate(expiry.getDate() + member.packageDays);
+  return expiry.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+};
 
 export default function KioskPage() {
   const [memberId, setMemberId] = useState("");
   const [mode, setMode] = useState<"check-in" | "check-out">("check-in");
-  const { result, error, loading, submit } = useCheckIn();
+  const [action, setAction] = useState<"ready" | "checked-in" | "checked-out">("ready");
+  const [countdown, setCountdown] = useState(0);
+  const { result, error, loading, submit, reset } = useCheckIn();
 
   const appendKey = (key: string) => {
     if (key === "CLR") {
@@ -36,8 +55,19 @@ export default function KioskPage() {
   };
   const submitMode = (selectedMode: "check-in" | "check-out") => {
     setMode(selectedMode);
-    if (memberId.trim() && !loading) submit(memberId.trim());
+    if (memberId.trim() && !loading) {
+      setAction(selectedMode === "check-in" ? "checked-in" : "checked-out");
+      setCountdown(8);
+      submit(memberId.trim());
+    }
   };
+  useEffect(() => {
+    if (!countdown) return;
+    const timer = window.setInterval(() => setCountdown(current => current <= 1 ? 0 : current - 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [countdown]);
+  useEffect(() => { if (action !== "ready" && countdown === 0) { setMemberId(""); setAction("ready"); reset(); } }, [action, countdown, reset]);
+  const resetKiosk = () => { setMemberId(""); setAction("ready"); setCountdown(0); reset(); };
 
   return (
     <main className="kiosk-shell">
@@ -65,8 +95,8 @@ export default function KioskPage() {
         </section>
 
         <section className="kiosk-result-panel">
-          <div className="kiosk-ready-bar"><div className="ready-icon"><Check size={22} /></div><div><strong>{result ? (result.status === "active" ? "Access Approved" : "Membership Expired") : "Ready For Next Member"}</strong><small>{result ? "Member record found" : "Enter a member ID to view access details."}</small></div><div className="terminal-reset"><small>Terminal reset</small><strong>Ready</strong><button type="button" onClick={() => { setMemberId(""); window.location.reload(); }}>Done</button></div></div>
-          {result ? <div className={`member-result ${result.status}`}><div className="member-overview"><div className="member-avatar"><UserRound size={34} /></div><div><h2>{result.member.fullName}</h2><span className="member-status"><BadgeCheck size={13} /> {result.status === "active" ? "Active" : "Expired"} · {result.member.packageName}</span><small>#{result.member.memberId}</small></div><div className="health-ring"><strong>{result.daysLeft}</strong><small>days left</small></div></div><div className="member-details"><div><Phone size={18} /><span><small>Primary phone</small><strong>Contact on file</strong></span></div><div><MapPin size={18} /><span><small>Registered residence</small><strong>Member record verified</strong></span></div></div><div className="benefits-panel"><div className="benefits-title"><span><ShieldCheck size={16} /> Package included benefits</span><b>{result.member.packageName}</b></div><div className="benefit-grid"><span><Check size={14} /> Access verified</span><span><Check size={14} /> Membership active</span><span><Check size={14} /> Entry recorded</span></div></div></div> : <div className="kiosk-empty"><KeyRound size={44} /><h2>Enter a member ID</h2><p>The member profile, package health, and access details will appear here.</p></div>}
+          <div className="kiosk-ready-bar"><div className="ready-icon"><Check size={22} /></div><div><strong>{action === "checked-in" ? "Successfully Checked In" : action === "checked-out" ? "Successfully Checked Out" : result ? (result.status === "active" ? "Access Approved" : "Membership Expired") : "Ready For Next Member"}</strong><small>{action === "checked-in" ? "Access granted for this member." : action === "checked-out" ? "Session finished successfully." : result ? "Member record found" : "Enter a member ID to view access details."}</small></div><div className="terminal-reset"><small>Terminal reset</small><strong>{countdown ? `${String(countdown).padStart(2, "0")}s` : "Ready"}</strong><button type="button" onClick={resetKiosk}>Done</button></div></div>
+          {result ? <div className={`member-result ${result.status}`}><div className="member-overview"><div className="member-avatar">{result.member.fullName.split(" ").map(part => part[0]).join("")}</div><div className="member-identity"><h2>{result.member.fullName}</h2><span className="member-status"><BadgeCheck size={13} /> {result.status === "active" ? "Active" : "Expired"} · {result.member.packageName}</span><small>#{result.member.memberId}</small><p>⌖ Metropolis Waterfront Club Branch</p></div><div className="health-card"><div className="health-ring"><strong>{result.daysLeft}</strong><small>days</small></div><div><span>Package Health</span><strong>{result.daysLeft} Days Left</strong><small>Renews {getExpiryDate(result.member)}</small></div></div></div><div className="member-details"><div><Phone size={18} /><span><small>Primary phone</small><strong>{result.member.contact}</strong><small>Emergency contact linked</small></span></div><div><MapPin size={18} /><span><small>Registered residence</small><strong>{result.member.address}</strong><small>Member record verified</small></span></div></div><div className="benefits-panel"><div className="benefits-title"><span><ShieldCheck size={16} /> Package included benefits</span><b>{result.member.packageName}</b></div><div className="benefit-grid">{(packageBenefits[result.member.packageName] ?? []).map(benefit => <span key={benefit}><Check size={14} /> {benefit}</span>)}</div></div></div> : <div className="kiosk-empty"><KeyRound size={44} /><h2>Enter a member ID</h2><p>The member profile, package health, and access details will appear here.</p></div>}
           {error && <p className="kiosk-error">{error}</p>}
         </section>
       </div>

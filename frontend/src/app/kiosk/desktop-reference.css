@@ -1,0 +1,1 @@
+.kiosk-body{max-width:1440px}.member-overview{padding-left:48px;padding-right:48px;gap:24px}.health-card{min-width:300px}@media(max-width:1200px){.kiosk-body{max-width:100%}}@media(min-width:1201px){.member-overview{flex-wrap:nowrap}.member-identity{flex:1 1 auto}.health-card{flex:0 1 420px}}

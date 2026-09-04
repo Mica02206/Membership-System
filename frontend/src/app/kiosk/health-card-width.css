@@ -1,0 +1,1 @@
+.health-card{flex:0 1 330px;width:330px;min-width:0;padding:12px 14px}.health-card>div:last-child{flex:1;min-width:0}.health-card small{max-width:150px}@media(max-width:1200px) and (min-width:561px){.health-card{width:100%;flex-basis:100%}}@media(max-width:560px){.health-card{width:100%;flex-basis:100%}}

@@ -4,7 +4,8 @@ import { registerMember, toStatus } from "../services/memberService.js";
 
 export function listMembers(_request: Request, response: Response) { response.json(memberStore.all().map(toStatus)); }
 export function checkMember(request: Request, response: Response) {
-  const member = memberStore.findByMemberId(request.params.memberId);
+  const memberId = Array.isArray(request.params.memberId) ? request.params.memberId[0] : request.params.memberId;
+  const member = memberStore.findByMemberId(memberId);
   if (!member) return response.status(404).json({ message: "Member not found" });
   return response.json(toStatus(member));
 }

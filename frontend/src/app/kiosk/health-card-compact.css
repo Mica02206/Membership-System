@@ -1,0 +1,1 @@
+.health-card{min-height:0;padding:12px 16px;gap:12px;border-radius:9px}.health-ring{width:86px;height:86px;flex-basis:86px;border-width:6px}.health-ring strong{font-size:20px}.health-ring small{font-size:9px}.health-card>div:last-child{gap:5px}.health-card span{font-size:9px}.health-card strong{font-size:14px}.health-card small{font-size:10px;line-height:1.2}
