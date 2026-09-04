@@ -4,7 +4,7 @@ import { memberStore } from "../models/memberStore.js";
 export function toStatus(member: Member) {
   const elapsed = Math.floor((Date.now() - new Date(member.startedAt).getTime()) / 86400000);
   const daysLeft = Math.max(0, member.packageDays - elapsed);
-  return { member: { fullName: member.fullName, memberId: member.memberId, packageName: member.packageName, contact: member.contact, address: member.address, packageDays: member.packageDays, startedAt: member.startedAt }, status: daysLeft > 0 ? "active" : "expired", daysLeft };
+  return { member: { fullName: member.fullName, memberId: member.memberId, packageName: member.packageName, contact: member.contact, address: member.address, packageDays: member.packageDays, startedAt: member.startedAt, ...(member.pictureUrl ? { pictureUrl: member.pictureUrl } : {}) }, status: daysLeft > 0 ? "active" : "expired", daysLeft };
 }
 
 export function registerMember(input: Omit<Member, "id" | "startedAt">) {

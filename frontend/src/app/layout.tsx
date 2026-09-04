@@ -4,6 +4,7 @@ import "./feature-overrides.css";
 import "./registration-reference.css";
 import "./sidebar-collapse.css";
 import "./camera-capture.css";
+import "./photo-preview.css";
 import "./kiosk/kiosk.css";
 import "./kiosk/kiosk-full-width.css";
 import "./kiosk/result-reference.css";

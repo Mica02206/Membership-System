@@ -13,7 +13,7 @@ import {
   ShieldCheck,
   UserRoundPlus,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { RegistrationForm } from "@/features/registration/components/RegistrationForm";
 import type { RegistrationForm as RegistrationFormData } from "@/features/registration/types/registration";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
@@ -37,11 +37,21 @@ export default function Home() {
     },
     expiry: "",
   });
+  const [previewPictureUrl, setPreviewPictureUrl] = useState("");
   const handlePreviewChange = useCallback(
     (form: RegistrationFormData, expiry: string) =>
       setPreview({ form, expiry }),
     [],
   );
+  useEffect(() => {
+    if (!preview.form.picture) {
+      setPreviewPictureUrl("");
+      return;
+    }
+    const pictureUrl = URL.createObjectURL(preview.form.picture);
+    setPreviewPictureUrl(pictureUrl);
+    return () => URL.revokeObjectURL(pictureUrl);
+  }, [preview.form.picture]);
   const handleRegistered = useCallback((form: RegistrationFormData) => {
     setRecentMembers((current) => [
       {
@@ -170,10 +180,14 @@ export default function Home() {
                   </div>
                   <div className="credential-person">
                     <div className="credential-avatar">
-                      {preview.form.fullName
-                        .split(" ")
-                        .map((part) => part[0])
-                        .join("") || "--"}
+                      {previewPictureUrl ? (
+                        <img src={previewPictureUrl} alt="Member profile preview" />
+                      ) : (
+                        preview.form.fullName
+                          .split(" ")
+                          .map((part) => part[0])
+                          .join("") || "--"
+                      )}
                     </div>
                     <div>
                       <strong>{preview.form.fullName || "Member name"}</strong>

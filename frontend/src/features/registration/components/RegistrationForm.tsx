@@ -146,6 +146,7 @@ export function RegistrationForm({
   });
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [picturePreview, setPicturePreview] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [registeredAt, setRegisteredAt] = useState(() => new Date());
@@ -171,6 +172,15 @@ export function RegistrationForm({
     },
     [],
   );
+  useEffect(() => {
+    if (!form.picture) {
+      setPicturePreview("");
+      return;
+    }
+    const previewUrl = URL.createObjectURL(form.picture);
+    setPicturePreview(previewUrl);
+    return () => URL.revokeObjectURL(previewUrl);
+  }, [form.picture]);
   const startCamera = async () => {
     setCameraError("");
     if (!navigator.mediaDevices?.getUserMedia) {
@@ -255,13 +265,14 @@ export function RegistrationForm({
           </div>
           <div className="photo-zone">
             <div className="photo-avatar">
-              {form.fullName
-                .split(" ")
-                .map((part) => part[0])
-                .join("") || "ER"}
-              <b>
-                <Check size={11} />
-              </b>
+              {picturePreview ? (
+                <img src={picturePreview} alt="Member profile preview" />
+              ) : (
+                form.fullName
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("") || "ER"
+              )}
             </div>
             <div className="photo-actions">
               <button type="button" onClick={startCamera}>
