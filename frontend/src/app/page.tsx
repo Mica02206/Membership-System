@@ -95,13 +95,6 @@ export default function Home() {
           </nav>
         </div>
         <div className="side-footer">
-          <div className="engine">
-            <span>Engine status</span>
-            <strong>Optimal</strong>
-            <div>
-              <i />
-            </div>
-          </div>
           <span className="sync-line">
             <Cpu size={14} /> Auto-Sync Mode <b>Active</b>
           </span>
@@ -142,18 +135,18 @@ export default function Home() {
               <div>
                 <BadgeCheck size={22} />
                 <span>
-                  <small>Daily issued</small>
+                  <small>New members</small>
                   <strong>
-                    42 <em>passes</em>
+                    42 <em>members</em>
                   </strong>
                 </span>
               </div>
               <div>
                 <ShieldCheck size={22} />
                 <span>
-                  <small>NFC stock</small>
+                  <small>Total members</small>
                   <strong>
-                    318 <em>ready</em>
+                    318 <em>members</em>
                   </strong>
                 </span>
               </div>
