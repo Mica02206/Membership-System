@@ -86,7 +86,7 @@ export default function Home() {
             <a title="All Enrollments">
               <ContactRound size={18} /> All Enrollments
             </a>
-            <a title="User Kiosk">
+            <a href="/kiosk" title="User Kiosk">
               <Monitor size={18} /> User Kiosk
             </a>
             <a title="Reports">
