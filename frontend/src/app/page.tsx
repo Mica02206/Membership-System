@@ -2,7 +2,6 @@
 
 import {
   BadgeCheck,
-  BarChart3,
   Bell,
   ClipboardList,
   CircleGauge,
@@ -83,14 +82,11 @@ export default function Home() {
             <a className="active" title="Admin Registration">
               <UserRoundPlus size={18} /> Admin Registration
             </a>
-            <a title="All Enrollments">
+            <a href="/enrollments" title="All Enrollments">
               <ContactRound size={18} /> All Enrollments
             </a>
             <a href="/kiosk" title="User Kiosk">
               <Monitor size={18} /> User Kiosk
-            </a>
-            <a title="Reports">
-              <BarChart3 size={18} /> Reports
             </a>
           </nav>
         </div>
