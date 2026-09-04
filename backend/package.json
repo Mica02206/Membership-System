@@ -1,0 +1,7 @@
+{
+  "name": "memberly-backend",
+  "private": true,
+  "scripts": { "dev": "tsx watch src/server.ts", "build": "tsc", "start": "node dist/server.js" },
+  "dependencies": { "cors": "latest", "express": "latest", "multer": "latest", "uuid": "latest" },
+  "devDependencies": { "@types/cors": "latest", "@types/express": "latest", "@types/multer": "latest", "@types/node": "latest", "tsx": "latest", "typescript": "latest" }
+}
