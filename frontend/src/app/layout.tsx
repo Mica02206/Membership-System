@@ -16,5 +16,10 @@ import "./kiosk/showcase-compact.css";
 import "./kiosk/health-card-compact.css";
 import "./kiosk/health-card-width.css";
 import "./enrollments/enrollments.css";
+import "./enrollments/roster-reference.css";
+import "./enrollments/inspector-reference.css";
+import "./enrollments/inspector-status.css";
+import "./enrollments/inspector-subscription.css";
+import "./enrollments/inspector-compact.css";
 export const metadata: Metadata = { title: "Memberly | Membership management" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html>; }
