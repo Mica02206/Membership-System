@@ -7,6 +7,7 @@ import {
   MapPin,
   Phone,
   RefreshCw,
+  Upload,
   UserRound,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -278,6 +279,17 @@ export function RegistrationForm({
               <button type="button" onClick={startCamera}>
                 <Camera size={13} /> Webcam Snap
               </button>
+              <label>
+                <Upload size={13} /> Upload Photo
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) update("picture", file);
+                  }}
+                />
+              </label>
             </div>
             {cameraOpen && (
               <div className="camera-panel">
@@ -355,7 +367,7 @@ export function RegistrationForm({
             <h2>
               <span className="medal">♜</span> 2. Package &amp; Entitlements
             </h2>
-            <span className="tier">Aura Tier</span>
+            <span className="tier">Tier</span>
           </div>
           <label>
             Membership Tier &amp; Plan <em>*</em>

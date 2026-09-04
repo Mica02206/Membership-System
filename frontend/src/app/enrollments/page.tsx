@@ -3,6 +3,7 @@
 import {
   Bell,
   BadgeCheck,
+  Camera,
   ChevronLeft,
   ChevronRight,
   CircleGauge,
@@ -16,10 +17,17 @@ import {
   MapPin,
   RefreshCw,
   ShieldCheck,
+  Upload,
   UserRoundPlus,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import type { MemberStatus } from "@/features/check-in/types/status";
+import {
+  fetchMembers,
+  fetchMemberStatus,
+  renewMemberPass,
+  uploadMemberPictureApi,
+} from "@/features/enrollments/services/enrollmentsApi";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
@@ -79,30 +87,109 @@ export default function EnrollmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [renewingId, setRenewingId] = useState<string | null>(null);
+  const [refreshingId, setRefreshingId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<{
+    text: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const loadMembers = async () => {
-    setLoading(true);
+  const loadMembers = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError("");
     try {
-      const response = await fetch(`${API_URL}/members`);
-      if (!response.ok) throw new Error("Unable to load members");
-      const data = (await response.json()) as MemberStatus[];
+      const data = await fetchMembers();
       setMembers(data);
       setSelectedId((current) => current || data[0]?.member.memberId || "");
     } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Unable to load members",
-      );
+      if (showLoading) {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "Unable to load members",
+        );
+      }
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadMembers();
+    loadMembers(true);
+    const interval = setInterval(() => {
+      loadMembers(false);
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
+
+  const handleRenewPass = async (memberId: string) => {
+    setRenewingId(memberId);
+    setActionMessage(null);
+    try {
+      const updated = await renewMemberPass(memberId);
+      setMembers((prev) =>
+        prev.map((item) =>
+          item.member.memberId === memberId ? updated : item,
+        ),
+      );
+      setActionMessage({
+        text: `Pass successfully renewed for ${updated.member.fullName}`,
+        type: "success",
+      });
+    } catch (renewErr) {
+      setActionMessage({
+        text: renewErr instanceof Error ? renewErr.message : "Failed to renew pass",
+        type: "error",
+      });
+    } finally {
+      setRenewingId(null);
+    }
+  };
+
+  const handleRefreshMember = async (memberId: string) => {
+    setRefreshingId(memberId);
+    setActionMessage(null);
+    try {
+      const updated = await fetchMemberStatus(memberId);
+      setMembers((prev) =>
+        prev.map((item) =>
+          item.member.memberId === memberId ? updated : item,
+        ),
+      );
+      setActionMessage({
+        text: `Member status updated for ${updated.member.fullName}`,
+        type: "success",
+      });
+    } catch (refreshErr) {
+      setActionMessage({
+        text: refreshErr instanceof Error ? refreshErr.message : "Failed to refresh member",
+        type: "error",
+      });
+    } finally {
+      setRefreshingId(null);
+    }
+  };
+
+  const handleUpdatePhoto = async (memberId: string, file: File) => {
+    setActionMessage(null);
+    try {
+      const updated = await uploadMemberPictureApi(memberId, file);
+      setMembers((prev) =>
+        prev.map((item) =>
+          item.member.memberId === memberId ? updated : item,
+        ),
+      );
+      setActionMessage({
+        text: `Photo updated successfully for ${updated.member.fullName}`,
+        type: "success",
+      });
+    } catch (err) {
+      setActionMessage({
+        text: err instanceof Error ? err.message : "Failed to update photo",
+        type: "error",
+      });
+    }
+  };
 
   const filteredMembers = useMemo(
     () =>
@@ -218,8 +305,8 @@ export default function EnrollmentsPage() {
               </p>
             </div>
             <div className="directory-actions">
-              <button type="button" onClick={loadMembers}>
-                <RefreshCw size={15} /> Refresh
+              <button type="button" onClick={() => loadMembers(true)} disabled={loading}>
+                <RefreshCw size={15} className={loading ? "animate-spin" : ""} /> {loading ? "Syncing..." : "Refresh"}
               </button>
               <a href="/">
                 {" "}
@@ -227,6 +314,39 @@ export default function EnrollmentsPage() {
               </a>
             </div>
           </div>
+          {actionMessage && (
+            <div
+              style={{
+                padding: "10px 14px",
+                marginBottom: "16px",
+                borderRadius: "8px",
+                fontSize: "12px",
+                fontWeight: 600,
+                backgroundColor:
+                  actionMessage.type === "success" ? "#dcfce7" : "#fee2e2",
+                color: actionMessage.type === "success" ? "#15803d" : "#b91c1c",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span>{actionMessage.text}</span>
+              <button
+                type="button"
+                onClick={() => setActionMessage(null)}
+                style={{
+                  background: "none",
+                  border: 0,
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  marginLeft: "auto",
+                  color: "inherit",
+                }}
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <div className="directory-stats">
             <div>
               <span>Total Enrolled</span>
@@ -392,9 +512,20 @@ export default function EnrollmentsPage() {
                             <button
                               type="button"
                               title="Refresh member"
-                              onClick={(event) => event.stopPropagation()}
+                              disabled={refreshingId === item.member.memberId}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                handleRefreshMember(item.member.memberId);
+                              }}
                             >
-                              <RefreshCw size={14} />
+                              <RefreshCw
+                                size={14}
+                                className={
+                                  refreshingId === item.member.memberId
+                                    ? "animate-spin"
+                                    : ""
+                                }
+                              />
                             </button>
                           </td>
                         </tr>
@@ -439,25 +570,50 @@ export default function EnrollmentsPage() {
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 600, fontSize: '0.8125rem' }}>
                       <ContactRound size={15} className="text-amber-600" /> Member Inspector
                     </span>
-                    <span style={{ backgroundColor: '#e2e8f0', color: '#475569', padding: '3px 8px', borderRadius: '4px', fontSize: '0.65rem', fontWeight: 600, letterSpacing: '0.5px' }}>
-                      RFID #{selected.member.memberId}
-                    </span>
                   </div>
 
                   {/* Member Card */}
                   <div style={{ backgroundColor: '#f1f5f9', borderRadius: '8px', padding: '0.875rem', display: 'flex', gap: '0.875rem', marginBottom: '0.875rem', alignItems: 'center' }}>
-                    <div style={{ flexShrink: 0 }}>
+                    <div style={{ flexShrink: 0, position: "relative" }}>
                       {getPictureUrl(selected.member.pictureUrl) ? (
                         <img 
                           src={getPictureUrl(selected.member.pictureUrl)} 
                           alt={`${selected.member.fullName} profile`} 
-                          style={{ width: '56px', height: '56px', borderRadius: '8px', objectFit: 'cover', border: '2px solid #f59e0b', display: 'block' }}
+                          style={{ width: '60px', height: '60px', borderRadius: '8px', objectFit: 'cover', border: '2px solid #f59e0b', display: 'block' }}
                         />
                       ) : (
-                        <div style={{ width: '56px', height: '56px', borderRadius: '8px', border: '2px solid #f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontSize: '1.125rem', fontWeight: 'bold', color: '#64748b' }}>
+                        <div style={{ width: '60px', height: '60px', borderRadius: '8px', border: '2px solid #f59e0b', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', fontSize: '1.25rem', fontWeight: 'bold', color: '#64748b' }}>
                           {selected.member.fullName.split(" ").map(part => part[0]).join("")}
                         </div>
                       )}
+                      <label
+                        title="Upload or change member photo"
+                        style={{
+                          position: "absolute",
+                          bottom: "-6px",
+                          right: "-6px",
+                          backgroundColor: "#f59e0b",
+                          color: "#4b3000",
+                          width: "24px",
+                          height: "24px",
+                          borderRadius: "50%",
+                          display: "grid",
+                          placeItems: "center",
+                          cursor: "pointer",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        <Camera size={13} />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleUpdatePhoto(selected.member.memberId, file);
+                          }}
+                        />
+                      </label>
                     </div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', justifyContent: 'center' }}>
@@ -555,7 +711,23 @@ export default function EnrollmentsPage() {
                     <span>Member activity is tracked at check-in.</span>
                   </div>
                   <div className="inspector-actions">
-                    <button type="button"><RefreshCw size={15} /> Renew Pass</button>
+                    <button
+                      type="button"
+                      disabled={renewingId === selected.member.memberId}
+                      onClick={() => handleRenewPass(selected.member.memberId)}
+                    >
+                      <RefreshCw
+                        size={15}
+                        className={
+                          renewingId === selected.member.memberId
+                            ? "animate-spin"
+                            : ""
+                        }
+                      />{" "}
+                      {renewingId === selected.member.memberId
+                        ? "Renewing..."
+                        : "Renew Pass"}
+                    </button>
                     <button type="button"><Eye size={15} /> Calculate Body Fat</button>
                   </div>
                 </>

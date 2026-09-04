@@ -11,3 +11,16 @@ export function registerMember(input: Omit<Member, "id" | "startedAt">) {
   if (memberStore.findByMemberId(input.memberId)) throw new Error("A member with that ID already exists");
   return memberStore.create(input);
 }
+
+export function renewMemberPass(memberId: string, days?: number) {
+  const member = memberStore.renew(memberId, days);
+  if (!member) throw new Error("Member not found");
+  return member;
+}
+
+export function updateMemberPicture(memberId: string, pictureUrl: string) {
+  const member = memberStore.updatePicture(memberId, pictureUrl);
+  if (!member) throw new Error("Member not found");
+  return member;
+}
+

@@ -13,5 +13,18 @@ export const memberStore = {
     const member: Member = { ...input, id: randomUUID(), startedAt: new Date().toISOString() };
     members.set(member.memberId.toUpperCase(), member);
     return member;
+  },
+  renew: (memberId: string, days?: number) => {
+    const member = members.get(memberId.toUpperCase());
+    if (!member) return null;
+    if (days && days > 0) member.packageDays = days;
+    member.startedAt = new Date().toISOString();
+    return member;
+  },
+  updatePicture: (memberId: string, pictureUrl: string) => {
+    const member = members.get(memberId.toUpperCase());
+    if (!member) return null;
+    member.pictureUrl = pictureUrl;
+    return member;
   }
 };

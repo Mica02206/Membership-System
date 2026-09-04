@@ -18,7 +18,7 @@ import { RegistrationForm } from "@/features/registration/components/Registratio
 import type { RegistrationForm as RegistrationFormData } from "@/features/registration/types/registration";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 
-type RecentMember = { fullName: string; memberId: string; packageName: string };
+type RecentMember = { fullName: string; memberId: string; packageName: string; pictureUrl?: string };
 
 export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -53,11 +53,13 @@ export default function Home() {
     return () => URL.revokeObjectURL(pictureUrl);
   }, [preview.form.picture]);
   const handleRegistered = useCallback((form: RegistrationFormData) => {
+    const pictureUrl = form.picture ? URL.createObjectURL(form.picture) : undefined;
     setRecentMembers((current) => [
       {
         fullName: form.fullName,
         memberId: form.memberId,
         packageName: form.packageName,
+        pictureUrl,
       },
       ...current,
     ]);
@@ -218,10 +220,23 @@ export default function Home() {
                       key={`${member.memberId}-${member.packageName}`}
                     >
                       <div className="roster-avatar">
-                        {member.fullName
-                          .split(" ")
-                          .map((part) => part[0])
-                          .join("")}
+                        {member.pictureUrl ? (
+                          <img
+                            src={member.pictureUrl}
+                            alt=""
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              borderRadius: "50%",
+                              objectFit: "cover",
+                            }}
+                          />
+                        ) : (
+                          member.fullName
+                            .split(" ")
+                            .map((part) => part[0])
+                            .join("")
+                        )}
                       </div>
                       <div className="roster-name">
                         <strong>{member.fullName}</strong>
