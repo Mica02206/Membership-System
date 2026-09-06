@@ -13,9 +13,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCheckIn } from "@/features/check-in/hooks/useCheckIn";
+import type { MemberStatus } from "@/features/check-in/types/status";
 
 const keypad = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "CLR"];
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const FLOOR_CAPACITY = 50;
 const packageBenefits: Record<string, string[]> = {
   "Individual Student": [
     "Free Trainer Assistance",
@@ -83,6 +85,17 @@ const packageBenefits: Record<string, string[]> = {
     "No Hidden Fees",
   ],
 };
+const packagePrices: Record<string, string> = {
+  "Individual Student": "₱850",
+  "Individual Professional": "₱999",
+  "Walk-in": "₱199",
+  "Barkada Group of 3 Professional": "₱2,697",
+  "Barkada Group of 3 Student": "₱2,250",
+  "Barkada Group of 5 Professional": "₱3,995",
+  "Barkada Group of 5 Student": "₱3,250",
+  "Barkada Group 6+ Professional": "₱4,194",
+  "Barkada Group 6+ Student": "₱3,600",
+};
 
 const getExpiryDate = (member: { startedAt: string; packageDays: number }) => {
   const expiry = new Date(member.startedAt);
@@ -107,7 +120,33 @@ export default function KioskPage() {
     "ready",
   );
   const [countdown, setCountdown] = useState(0);
+  const [activeMemberCount, setActiveMemberCount] = useState(0);
   const { result, error, loading, submit, reset } = useCheckIn();
+
+  useEffect(() => {
+    let mounted = true;
+    const loadCapacity = async () => {
+      try {
+        const response = await fetch(`${API_URL}/members`);
+        if (!response.ok) return;
+        const members = (await response.json()) as MemberStatus[];
+        if (mounted) {
+          setActiveMemberCount(members.filter((member) => member.status === "active").length);
+        }
+      } catch {
+        // Keep the last known capacity when the API is temporarily unavailable.
+      }
+    };
+    loadCapacity();
+    const interval = window.setInterval(loadCapacity, 10000);
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const floorCapacity = Math.min(100, Math.round((activeMemberCount / FLOOR_CAPACITY) * 100));
+  const floorFlow = floorCapacity >= 75 ? "Busy flow" : floorCapacity >= 35 ? "Moderate flow" : "Light flow";
 
   const appendKey = (key: string) => {
     if (key === "CLR") {
@@ -162,15 +201,20 @@ export default function KioskPage() {
               href="/"
               aria-label="Return to admin console"
               title="Return to admin console"
+              style={{ width: 72, height: 48, background: "transparent" }}
             >
-              <KeyRound size={22} />
+              <img
+                src="/sams-slim-gym-logo.png"
+                alt="Sam's Slim Gym"
+                style={{ width: 72, height: 48, objectFit: "contain", borderRadius: 0 }}
+              />
             </a>
             <span>
-              <small>Auraclub Express Access</small>
-              <strong>Quick Member Kiosk</strong>
+              <small>Sam's Gym Access</small>
+              <strong>Member Kiosk</strong>
             </span>
           </div>
-          <div className="kiosk-station">
+          <div className="kiosk-station" style={{ display: "none" }}>
             <span>●</span> Station #04
           </div>
           <div className="kiosk-clock">
@@ -270,10 +314,10 @@ export default function KioskPage() {
               <ShieldCheck size={19} />
               <span>
                 <strong>Club Floor Capacity</strong>
-                <small>Currently at 42% capacity · Moderate flow</small>
+                <small>Currently at {floorCapacity}% capacity · {floorFlow}</small>
               </span>
-              <i>
-                <b />
+              <i aria-label={`${floorCapacity}% floor capacity`}>
+                <b style={{ width: `${floorCapacity}%` }} />
               </i>
             </div>
           </section>
@@ -341,17 +385,26 @@ export default function KioskPage() {
                       {result.member.packageName}
                     </span>
                     <small>#{result.member.memberId}</small>
-                    <p>⌖ Metropolis Waterfront Club Branch</p>
+                    <p>⌖ Sam's Slim Gym</p>
                   </div>
-                  <div className="health-card">
-                    <div className="health-ring">
-                      <strong>{result.daysLeft}</strong>
-                      <small>days</small>
+                  <div className="subscription-health-card">
+                    <div className="subscription-health-heading">
+                      <span>Active Subscription</span>
+                      <b className={result.status === "active" ? "active" : "expired"}>
+                        {result.status}
+                      </b>
                     </div>
-                    <div>
-                      <span>Package Health</span>
-                      <strong>{result.daysLeft} Days Left</strong>
-                      <small>Renews {getExpiryDate(result.member)}</small>
+                    <strong className="subscription-health-package">{result.member.packageName}</strong>
+                    <div className="subscription-health-price">
+                      <strong>{packagePrices[result.member.packageName] ?? ""}</strong>
+                      <span>{result.member.packageDays === 1 ? "/ session" : "/ month (Auto-Renew)"}</span>
+                    </div>
+                    <div className="subscription-health-validity">
+                      <span>Cycle Validity</span>
+                      <strong>{result.daysLeft} Days Left (Valid till {getExpiryDate(result.member)})</strong>
+                    </div>
+                    <div className="subscription-health-progress">
+                      <i style={{ width: `${Math.min(100, Math.max(0, (result.daysLeft / result.member.packageDays) * 100))}%` }} />
                     </div>
                   </div>
                 </div>

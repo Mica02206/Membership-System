@@ -2,17 +2,21 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  min-width: 360px;
-  min-height: 165px;
+  width: 495px !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+  height: 165px !important;
+  min-height: 165px !important;
+  max-height: 165px !important;
   padding: 18px 22px;
   border-radius: 14px;
   background: #edf2fc;
 }
 
 .health-ring {
-  width: 130px;
-  height: 130px;
-  flex: 0 0 130px;
+  width: 130px !important;
+  height: 130px !important;
+  flex: 0 0 130px !important;
   border: 9px solid var(--amber);
   border-right-color: #dce9ff;
 }
@@ -55,16 +59,18 @@
 
 @media (max-width: 560px) {
   .health-card {
-    min-width: 0;
-    min-height: 145px;
+    width: 100% !important;
+    height: 145px !important;
+    min-height: 145px !important;
+    max-height: 145px !important;
     padding: 16px;
     gap: 14px;
   }
 
   .health-ring {
-    width: 96px;
-    height: 96px;
-    flex-basis: 96px;
+    width: 96px !important;
+    height: 96px !important;
+    flex-basis: 96px !important;
     border-width: 7px;
   }
 

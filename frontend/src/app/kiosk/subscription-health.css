@@ -1,0 +1,107 @@
+.subscription-health-card {
+  width: 440px;
+  max-width: 100%;
+  min-width: 0;
+  padding: 16px;
+  border-radius: 10px;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.subscription-health-heading,
+.subscription-health-validity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.subscription-health-heading {
+  margin-bottom: 10px;
+}
+
+.subscription-health-heading > span,
+.subscription-health-validity > span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.subscription-health-heading b {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.subscription-health-heading b.active {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.subscription-health-heading b.expired {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.subscription-health-package {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 18px;
+}
+
+.subscription-health-price {
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.subscription-health-price strong {
+  color: #92400e;
+  font-size: 28px;
+  line-height: 0.9;
+}
+
+.subscription-health-price span {
+  padding-bottom: 2px;
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.subscription-health-validity {
+  align-items: flex-end;
+  margin-bottom: 6px;
+}
+
+.subscription-health-validity strong {
+  max-width: 235px;
+  color: #0f172a;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: right;
+}
+
+.subscription-health-progress {
+  width: 100%;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #cbd5e1;
+}
+
+.subscription-health-progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #22c55e;
+}
+
+@media (max-width: 560px) {
+  .subscription-health-card {
+    width: 100%;
+  }
+}
