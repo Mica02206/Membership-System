@@ -15,6 +15,7 @@ import "./kiosk/desktop-reference.css";
 import "./kiosk/showcase-compact.css";
 import "./kiosk/health-card-compact.css";
 import "./kiosk/health-card-width.css";
+import "./kiosk/health-card-reference.css";
 import "./enrollments/enrollments.css";
 import "./enrollments/roster-reference.css";
 import "./enrollments/inspector-reference.css";

@@ -121,9 +121,9 @@ export default function Home() {
         </button>
         <div>
           <div className="side-brand">
-            <span className="aura-mark">A</span>
+            <img className="aura-mark" src="/sams-slim-gym-logo.png" alt="Sam's Slim Gym" style={{ width: 58, height: 38, objectFit: "contain", borderRadius: 0, background: "transparent" }} />
             <div>
-              <strong>AuraMember</strong>
+              <strong>Sam's Slim Gym</strong>
               <small>Management Core</small>
             </div>
           </div>
@@ -163,14 +163,6 @@ export default function Home() {
           <div className="header-actions">
             <Bell size={17} />
             <ThemeToggle />
-            <div className="header-divider" />
-            <div className="profile">
-              <div>
-                <strong>Sarah Jenkins</strong>
-                <small>Super Administrator</small>
-              </div>
-              <span>SJ</span>
-            </div>
           </div>
         </header>
         <section className="console-main">
@@ -219,7 +211,7 @@ export default function Home() {
                 <div className="credential">
                   <div className="credential-top">
                     <span className="credential-brand">
-                      <b>A</b> AuraPass
+                      <img src="/sams-slim-gym-logo.png" alt="" style={{ width: 30, height: 26, objectFit: "contain", borderRadius: 4, background: "transparent" }} /> Sam's Pass
                     </span>
                     <strong>{preview.form.packageName}</strong>
                   </div>
@@ -301,7 +293,7 @@ export default function Home() {
             </aside>
           </div>
           <footer>
-            <span>© 2026 AuraMember</span>
+            <span>© 2026 Sam's Slim Gym</span>
             <span>
               <i /> Secure membership management
             </span>
