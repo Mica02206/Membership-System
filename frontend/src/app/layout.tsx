@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./feature-overrides.css";
+import "./credential-fix.css";
 import "./registration-reference.css";
 import "./sidebar-collapse.css";
 import "./camera-capture.css";
@@ -17,11 +18,13 @@ import "./kiosk/health-card-compact.css";
 import "./kiosk/health-card-width.css";
 import "./kiosk/health-card-reference.css";
 import "./kiosk/subscription-health.css";
+import "./kiosk/member-overview-container.css";
 import "./enrollments/enrollments.css";
 import "./enrollments/roster-reference.css";
 import "./enrollments/inspector-reference.css";
 import "./enrollments/inspector-status.css";
 import "./enrollments/inspector-subscription.css";
 import "./enrollments/inspector-compact.css";
+import "./enrollments/spacing-fix.css";
 export const metadata: Metadata = { title: "Memberly | Membership management" };
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html>; }

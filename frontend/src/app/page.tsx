@@ -2,7 +2,6 @@
 
 import {
   BadgeCheck,
-  Bell,
   ClipboardList,
   CircleGauge,
   ContactRound,
@@ -20,10 +19,17 @@ import { ThemeToggle } from "@/shared/components/ThemeToggle";
 
 import type { MemberStatus } from "@/features/check-in/types/status";
 
-type RecentMember = { fullName: string; memberId: string; packageName: string; pictureUrl?: string };
+type RecentMember = { fullName: string; memberId: string; packageName: string; pictureUrl?: string; registeredAt?: string };
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+const getPictureUrl = (pictureUrl?: string) => {
+  if (!pictureUrl) return "";
+  if (pictureUrl.startsWith("http") || pictureUrl.startsWith("data:")) return pictureUrl;
+  return `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`;
+};
 
 export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [recentMembers, setRecentMembers] = useState<RecentMember[]>([]);
   const [dbMembers, setDbMembers] = useState<MemberStatus[]>([]);
   const [preview, setPreview] = useState<{
@@ -44,14 +50,29 @@ export default function Home() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
       const res = await fetch(`${API_URL}/members`);
       if (res.ok) {
         const data = (await res.json()) as MemberStatus[];
         setDbMembers(data);
+        const today = new Date().toDateString();
+        setRecentMembers(
+          data
+            .filter((item) => item.member.registeredAt && new Date(item.member.registeredAt).toDateString() === today)
+            .map((item) => ({
+              fullName: item.member.fullName,
+              memberId: item.member.memberId,
+              packageName: item.member.packageName,
+              pictureUrl: getPictureUrl(item.member.pictureUrl),
+              registeredAt: item.member.registeredAt,
+            })),
+        );
       }
     } catch {}
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
   }, []);
 
   useEffect(() => {
@@ -64,7 +85,7 @@ export default function Home() {
   const newMembersCount = useMemo(() => {
     const todayStr = new Date().toDateString();
     return dbMembers.filter(
-      (m) => new Date(m.member.startedAt).toDateString() === todayStr
+      (m) => new Date(m.member.registeredAt ?? m.member.startedAt).toDateString() === todayStr
     ).length;
   }, [dbMembers]);
 
@@ -83,26 +104,7 @@ export default function Home() {
     return () => URL.revokeObjectURL(pictureUrl);
   }, [preview.form.picture]);
   const handleRegistered = useCallback(
-    (form: RegistrationFormData, created?: any) => {
-      const API_URL =
-        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-      const backendPic = created?.member?.pictureUrl;
-      const pictureUrl = backendPic
-        ? backendPic.startsWith("http")
-          ? backendPic
-          : `${API_URL.replace(/\/api\/?$/, "")}${backendPic}`
-        : form.picture
-          ? URL.createObjectURL(form.picture)
-          : undefined;
-      setRecentMembers((current) => [
-        {
-          fullName: form.fullName,
-          memberId: form.memberId,
-          packageName: form.packageName,
-          pictureUrl,
-        },
-        ...current,
-      ]);
+    (_form: RegistrationFormData, _created?: any) => {
       fetchStats();
     },
     [fetchStats],
@@ -155,13 +157,15 @@ export default function Home() {
         <header className="console-header">
           <div className="header-meta">
             <span>
-              <CircleGauge size={15} /> 10:42 AM UTC
+              <CircleGauge size={15} /> {currentTime.toLocaleString([], {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
             </span>
             <i />
-            <span className="cluster-dot" /> Cluster North-1
+            <span className="cluster-dot" /> 17 BS Aquino Drive, Bacolod
           </div>
           <div className="header-actions">
-            <Bell size={17} />
             <ThemeToggle />
           </div>
         </header>

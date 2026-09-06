@@ -1,0 +1,123 @@
+.member-overview {
+  display: flex !important;
+  align-items: center;
+  gap: 24px;
+  margin: 20px 0 0;
+  padding: 28px 30px;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  background: #fff !important;
+  box-shadow: 0 1px 8px rgba(15, 38, 68, 0.05);
+}
+
+.subscription-health-card {
+  flex: 0 1 440px;
+  width: 440px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.member-avatar {
+  width: 180px !important;
+  height: 180px !important;
+  min-width: 180px;
+  max-width: 180px;
+  min-height: 180px;
+  max-height: 180px;
+  flex: 0 0 180px;
+  aspect-ratio: 1 / 1;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.member-avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.member-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.member-overview h2 {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  font-size: clamp(28px, 2.8vw, 40px);
+  line-height: 1.05;
+}
+
+.member-status {
+  max-width: 100%;
+  white-space: normal;
+}
+
+.member-result {
+  overflow: hidden;
+  border: 1px solid #e5eaf3;
+  border-radius: 12px;
+  background: #fff !important;
+  box-shadow: 0 1px 8px rgba(15, 38, 68, 0.05);
+}
+
+.member-result .member-overview {
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.member-result .member-details {
+  margin: 0;
+  padding: 22px 30px;
+  border-top: 1px solid #e5eaf3;
+  background: #fff;
+}
+
+.member-result .member-details > div {
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (max-width: 1000px) {
+  .member-overview {
+    flex-wrap: wrap;
+  }
+
+  .subscription-health-card {
+    flex-basis: 100%;
+    width: 100%;
+  }
+}
+
+@media (max-width: 560px) {
+  .member-overview {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 16px;
+  }
+
+  .member-identity {
+    flex: 1 1 180px;
+  }
+
+  .member-avatar {
+    width: 62px !important;
+    height: 62px !important;
+    min-width: 62px;
+    max-width: 62px;
+    min-height: 62px;
+    max-height: 62px;
+    flex-basis: 62px;
+  }
+
+  .subscription-health-card {
+    flex-basis: 100%;
+  }
+}

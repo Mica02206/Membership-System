@@ -4,12 +4,15 @@ import { memberStore } from "../models/memberStore.js";
 export function toStatus(member: Member) {
   const elapsed = Math.floor((Date.now() - new Date(member.startedAt).getTime()) / 86400000);
   const daysLeft = Math.min(member.packageDays, Math.max(0, member.packageDays - elapsed));
-  return { member: { fullName: member.fullName, memberId: member.memberId, packageName: member.packageName, contact: member.contact, address: member.address, packageDays: member.packageDays, startedAt: member.startedAt, ...(member.pictureUrl ? { pictureUrl: member.pictureUrl } : {}) }, status: daysLeft > 0 ? "active" : "expired", daysLeft, lastActivity: memberStore.lastActivity(member.memberId) };
+  return { member: { fullName: member.fullName, memberId: member.memberId, packageName: member.packageName, contact: member.contact, address: member.address, packageDays: member.packageDays, startedAt: member.startedAt, ...(member.registeredAt ? { registeredAt: member.registeredAt } : {}), ...(member.pictureUrl ? { pictureUrl: member.pictureUrl } : {}) }, status: daysLeft > 0 ? "active" : "expired", daysLeft, lastActivity: memberStore.lastActivity(member.memberId) };
 }
 
 export function recordMemberActivity(memberId: string, action: "check-in" | "check-out") {
   const member = memberStore.findByMemberId(memberId);
   if (!member) throw new Error("Member not found");
+  if (toStatus(member).status === "expired") {
+    throw new Error("Membership expired. Check-in and check-out are unavailable.");
+  }
   memberStore.recordActivity(member.memberId, action);
   return toStatus(member);
 }

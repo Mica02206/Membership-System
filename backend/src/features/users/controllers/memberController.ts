@@ -39,7 +39,8 @@ export function recordActivity(request: Request, response: Response) {
     if (action !== "check-in" && action !== "check-out") return response.status(400).json({ message: "Activity must be check-in or check-out" });
     return response.json(recordMemberActivity(memberId, action));
   } catch (error) {
-    return response.status(404).json({ message: error instanceof Error ? error.message : "Unable to record member activity" });
+    const message = error instanceof Error ? error.message : "Unable to record member activity";
+    return response.status(message.startsWith("Membership expired") ? 403 : 404).json({ message });
   }
 }
 export function createMember(request: Request, response: Response) {

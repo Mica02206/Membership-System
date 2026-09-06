@@ -6,8 +6,6 @@ import {
   Clock3,
   Delete,
   KeyRound,
-  MapPin,
-  Phone,
   ShieldCheck,
   UserRound,
 } from "lucide-react";
@@ -161,12 +159,17 @@ export default function KioskPage() {
     event.preventDefault();
     if (memberId.trim()) submit(memberId.trim(), mode);
   };
-  const submitMode = (selectedMode: "check-in" | "check-out") => {
+  const submitMode = async (selectedMode: "check-in" | "check-out") => {
     setMode(selectedMode);
     if (memberId.trim() && !loading) {
-      setAction(selectedMode === "check-in" ? "checked-in" : "checked-out");
-      setCountdown(8);
-      submit(memberId.trim(), selectedMode);
+      const submitted = await submit(memberId.trim(), selectedMode);
+      if (submitted?.status === "active") {
+        setAction(selectedMode === "check-in" ? "checked-in" : "checked-out");
+        setCountdown(8);
+      } else {
+        setAction("ready");
+        setCountdown(0);
+      }
     }
   };
   useEffect(() => {
@@ -406,24 +409,6 @@ export default function KioskPage() {
                     <div className="subscription-health-progress">
                       <i style={{ width: `${Math.min(100, Math.max(0, (result.daysLeft / result.member.packageDays) * 100))}%` }} />
                     </div>
-                  </div>
-                </div>
-                <div className="member-details">
-                  <div>
-                    <Phone size={18} />
-                    <span>
-                      <small>Primary phone</small>
-                      <strong>{result.member.contact}</strong>
-                      <small>Emergency contact linked</small>
-                    </span>
-                  </div>
-                  <div>
-                    <MapPin size={18} />
-                    <span>
-                      <small>Registered residence</small>
-                      <strong>{result.member.address}</strong>
-                      <small>Member record verified</small>
-                    </span>
                   </div>
                 </div>
                 <div className="benefits-panel">

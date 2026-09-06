@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   BadgeCheck,
   Camera,
   ChevronLeft,
@@ -102,6 +101,7 @@ function EditModal({ item, onClose, onSaved }: EditModalProps) {
     address: item.member.address,
     packageName: item.member.packageName,
     packageDays: String(item.member.packageDays),
+    startedAt: item.member.startedAt.slice(0, 10),
   });
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState("");
@@ -117,6 +117,7 @@ function EditModal({ item, onClose, onSaved }: EditModalProps) {
       const updated = await editMemberApi(item.member.memberId, {
         ...form,
         packageDays: Number(form.packageDays),
+        startedAt: form.startedAt ? new Date(`${form.startedAt}T00:00:00`).toISOString() : undefined,
       });
       onSaved(updated);
     } catch (error) {
@@ -219,6 +220,10 @@ function EditModal({ item, onClose, onSaved }: EditModalProps) {
               <label style={labelStyle}>Duration (days)</label>
               <input style={fieldStyle} type="number" min="1" value={form.packageDays} onChange={set("packageDays")} required />
             </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Registration / Start Date</label>
+            <input style={fieldStyle} type="date" value={form.startedAt} onChange={set("startedAt")} required />
           </div>
 
           {err && (
@@ -341,6 +346,7 @@ export default function EnrollmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date());
   const [renewingId, setRenewingId] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
@@ -366,6 +372,11 @@ export default function EnrollmentsPage() {
       if (showLoading) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     loadMembers(true);
@@ -610,12 +621,11 @@ export default function EnrollmentsPage() {
       <div className="directory-content">
         <header className="console-header">
           <div className="header-meta">
-            <span><CircleGauge size={15} /> 10:42 AM UTC</span>
+            <span><CircleGauge size={15} /> {currentTime.toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</span>
             <i />
-            <span className="cluster-dot" /> Cluster North-1
+            <span className="cluster-dot" /> 17 BS Aquino Drive, Bacolod
           </div>
           <div className="header-actions">
-            <Bell size={17} />
             <ThemeToggle />
           </div>
         </header>

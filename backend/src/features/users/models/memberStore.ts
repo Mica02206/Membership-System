@@ -70,6 +70,7 @@ function rowToMember(row: Record<string, unknown>): Member {
     packageName: row.packageName as string,
     packageDays: row.packageDays as number,
     startedAt:   row.startedAt as string,
+    registeredAt: row.registeredAt as string | undefined,
   };
 }
 

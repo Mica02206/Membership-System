@@ -1,5 +1,5 @@
 .subscription-health-card {
-  width: 440px;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   padding: 16px;
@@ -50,6 +50,7 @@
   display: block;
   margin-bottom: 8px;
   font-size: 18px;
+  overflow-wrap: anywhere;
 }
 
 .subscription-health-price {

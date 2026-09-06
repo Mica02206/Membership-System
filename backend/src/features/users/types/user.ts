@@ -8,4 +8,5 @@ export type Member = {
   packageName: string;
   packageDays: number;
   startedAt: string;
+  registeredAt?: string;
 };
