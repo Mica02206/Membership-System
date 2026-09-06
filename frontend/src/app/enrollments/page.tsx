@@ -81,6 +81,8 @@ const getExpiryDate = (member: MemberStatus["member"]) => {
   expiry.setDate(expiry.getDate() + member.packageDays);
   return expiry.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 };
+const getActivityTime = (occurredAt: string) =>
+  new Date(occurredAt).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
 
 const csvCell = (value: string | number) => {
   const text = String(value ?? "");
@@ -834,8 +836,16 @@ export default function EnrollmentsPage() {
                   </div>
                   <div className="inspector-activity">
                     <div><small>Recent Turnstile Activity</small><ShieldCheck size={15} /></div>
-                    <strong>Kiosk Station #04</strong>
-                    <span>Member activity is tracked at check-in.</span>
+                    <strong>
+                      {selected.lastActivity
+                        ? `${selected.lastActivity.action === "check-in" ? "Checked in" : "Checked out"} · ${selected.lastActivity.station}`
+                        : "No kiosk activity yet"}
+                    </strong>
+                    <span>
+                      {selected.lastActivity
+                        ? getActivityTime(selected.lastActivity.occurredAt)
+                        : "Activity will appear after the next kiosk check-in or check-out."}
+                    </span>
                   </div>
                   <div className="inspector-actions">
                     <button type="button" disabled={renewingId === selected.member.memberId} onClick={() => handleRenewPass(selected.member.memberId)}>

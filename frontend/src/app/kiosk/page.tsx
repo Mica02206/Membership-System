@@ -159,14 +159,14 @@ export default function KioskPage() {
   const removeLast = () => setMemberId((current) => current.slice(0, -1));
   const submitMember = (event: React.FormEvent) => {
     event.preventDefault();
-    if (memberId.trim()) submit(memberId.trim());
+    if (memberId.trim()) submit(memberId.trim(), mode);
   };
   const submitMode = (selectedMode: "check-in" | "check-out") => {
     setMode(selectedMode);
     if (memberId.trim() && !loading) {
       setAction(selectedMode === "check-in" ? "checked-in" : "checked-out");
       setCountdown(8);
-      submit(memberId.trim());
+      submit(memberId.trim(), selectedMode);
     }
   };
   useEffect(() => {

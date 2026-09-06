@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { Request, Response } from "express";
 import { memberStore } from "../models/memberStore.js";
-import { registerMember, renewMemberPass, updateMemberPicture, updateMember, deleteMember, toStatus } from "../services/memberService.js";
+import { registerMember, renewMemberPass, updateMemberPicture, updateMember, deleteMember, toStatus, recordMemberActivity } from "../services/memberService.js";
 
 function savePictureFromRequest(request: Request): string | undefined {
   if (request.file) {
@@ -31,6 +31,16 @@ export function checkMember(request: Request, response: Response) {
   const member = memberStore.findByMemberId(memberId);
   if (!member) return response.status(404).json({ message: "Member not found" });
   return response.json(toStatus(member));
+}
+export function recordActivity(request: Request, response: Response) {
+  try {
+    const memberId = Array.isArray(request.params.memberId) ? request.params.memberId[0] : request.params.memberId;
+    const action = request.body?.action;
+    if (action !== "check-in" && action !== "check-out") return response.status(400).json({ message: "Activity must be check-in or check-out" });
+    return response.json(recordMemberActivity(memberId, action));
+  } catch (error) {
+    return response.status(404).json({ message: error instanceof Error ? error.message : "Unable to record member activity" });
+  }
 }
 export function createMember(request: Request, response: Response) {
   try {

@@ -24,6 +24,13 @@ db.exec(`
     startedAt    TEXT NOT NULL,
     registeredAt TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS member_activity (
+    memberId TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    station TEXT NOT NULL,
+    occurredAt TEXT NOT NULL
+  );
 `);
 
 // ── Seed data (only if table is empty) ─────────────────────────────────────
@@ -74,6 +81,25 @@ export const memberStore = {
   findByMemberId: (memberId: string): Member | undefined => {
     const row = db.prepare("SELECT * FROM members WHERE memberId = ?").get(memberId.toUpperCase()) as Record<string, unknown> | undefined;
     return row ? rowToMember(row) : undefined;
+  },
+
+  recordActivity: (memberId: string, action: "check-in" | "check-out", station = "Kiosk"): boolean => {
+    const normalizedMemberId = memberId.trim().toUpperCase();
+    const result = db.prepare(`
+      INSERT INTO member_activity (memberId, action, station, occurredAt)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(memberId) DO UPDATE SET
+        action = excluded.action,
+        station = excluded.station,
+        occurredAt = excluded.occurredAt
+    `).run(normalizedMemberId, action, station, new Date().toISOString());
+    return result.changes > 0;
+  },
+
+  lastActivity: (memberId: string): { action: "check-in" | "check-out"; station: string; occurredAt: string } | undefined => {
+    const row = db.prepare("SELECT action, station, occurredAt FROM member_activity WHERE memberId = ?")
+      .get(memberId.trim().toUpperCase()) as { action: "check-in" | "check-out"; station: string; occurredAt: string } | undefined;
+    return row;
   },
 
   create: (input: Omit<Member, "id" | "startedAt">): Member => {
