@@ -129,7 +129,7 @@ const plans = [
 
 type RegistrationFormProps = {
   onPreviewChange?: (form: Form, expiry: string) => void;
-  onRegistered?: (form: Form) => void;
+  onRegistered?: (form: Form, created?: any) => void;
 };
 
 export function RegistrationForm({
@@ -212,20 +212,27 @@ export function RegistrationForm({
   };
   const capturePhoto = () => {
     const video = videoRef.current;
-    if (!video || video.readyState < 2) return;
+    if (!video) return;
     const canvas = document.createElement("canvas");
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    canvas
-      .getContext("2d")
-      ?.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const width = video.videoWidth || video.clientWidth || 640;
+    const height = video.videoHeight || video.clientHeight || 480;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, width, height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
     canvas.toBlob(
       (blob) => {
         if (blob) {
-          update(
-            "picture",
-            new File([blob], "webcam-snapshot.jpg", { type: "image/jpeg" }),
-          );
+          const file = new File([blob], `webcam-${Date.now()}.jpg`, {
+            type: "image/jpeg",
+          });
+          setForm((current) => ({
+            ...current,
+            picture: file,
+            pictureDataUrl: dataUrl,
+          }));
           closeCamera();
         }
       },
@@ -252,7 +259,7 @@ export function RegistrationForm({
         const registered = await submit(form);
         if (registered) {
           setRegisteredAt(new Date());
-          onRegistered?.(form);
+          onRegistered?.(form, registered);
         }
       }}
     >
@@ -291,6 +298,11 @@ export function RegistrationForm({
                 />
               </label>
             </div>
+            {picturePreview && (
+              <small style={{ color: "#15803d", fontWeight: 700, marginTop: "6px", fontSize: "10px", display: "block" }}>
+                ✓ Profile Photo Attached
+              </small>
+            )}
             {cameraOpen && (
               <div className="camera-panel">
                 <video ref={videoRef} autoPlay playsInline muted />

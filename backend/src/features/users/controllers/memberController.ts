@@ -1,6 +1,29 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { Request, Response } from "express";
 import { memberStore } from "../models/memberStore.js";
-import { registerMember, renewMemberPass, updateMemberPicture, toStatus } from "../services/memberService.js";
+import { registerMember, renewMemberPass, updateMemberPicture, updateMember, deleteMember, toStatus } from "../services/memberService.js";
+
+function savePictureFromRequest(request: Request): string | undefined {
+  if (request.file) {
+    return `/uploads/${request.file.filename}`;
+  }
+  const rawDataUrl = request.body?.pictureDataUrl || request.body?.picture;
+  if (typeof rawDataUrl === "string" && rawDataUrl.startsWith("data:image")) {
+    try {
+      const match = rawDataUrl.match(/^data:image\/([a-zA-Z0-9]+);base64,(.+)$/);
+      const ext = match ? `.${match[1] === "jpeg" ? "jpg" : match[1]}` : ".jpg";
+      const base64Data = match ? match[2] : rawDataUrl.split(",")[1];
+      if (base64Data) {
+        const filename = `picture-${Date.now()}-${Math.floor(Math.random() * 1e9)}${ext}`;
+        const filePath = path.resolve("uploads", filename);
+        fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+        return `/uploads/${filename}`;
+      }
+    } catch {}
+  }
+  return undefined;
+}
 
 export function listMembers(_request: Request, response: Response) { response.json(memberStore.all().map(toStatus)); }
 export function checkMember(request: Request, response: Response) {
@@ -13,7 +36,8 @@ export function createMember(request: Request, response: Response) {
   try {
     const { fullName, memberId, contact, address, packageName, packageDays } = request.body;
     if (!fullName || !memberId || !contact || !address || !packageName || !Number(packageDays)) return response.status(400).json({ message: "All registration fields are required" });
-    const member = registerMember({ fullName, memberId, contact, address, packageName, packageDays: Number(packageDays), pictureUrl: request.file ? `/uploads/${request.file.filename}` : undefined });
+    const pictureUrl = savePictureFromRequest(request);
+    const member = registerMember({ fullName, memberId, contact, address, packageName, packageDays: Number(packageDays), pictureUrl });
     return response.status(201).json(toStatus(member));
   } catch (error) { return response.status(409).json({ message: error instanceof Error ? error.message : "Unable to register member" }); }
 }
@@ -30,12 +54,32 @@ export function renewMember(request: Request, response: Response) {
 export function uploadMemberPicture(request: Request, response: Response) {
   try {
     const memberId = Array.isArray(request.params.memberId) ? request.params.memberId[0] : request.params.memberId;
-    if (!request.file) return response.status(400).json({ message: "No picture file provided" });
-    const pictureUrl = `/uploads/${request.file.filename}`;
+    const pictureUrl = savePictureFromRequest(request);
+    if (!pictureUrl) return response.status(400).json({ message: "No picture file provided" });
     const member = updateMemberPicture(memberId, pictureUrl);
     return response.json(toStatus(member));
   } catch (error) {
     return response.status(404).json({ message: error instanceof Error ? error.message : "Unable to update member photo" });
+  }
+}
+export function editMember(request: Request, response: Response) {
+  try {
+    const memberId = Array.isArray(request.params.memberId) ? request.params.memberId[0] : request.params.memberId;
+    const { fullName, contact, address, packageName, packageDays, startedAt } = request.body;
+    const updated = updateMember(memberId, { fullName, contact, address, packageName, packageDays: packageDays ? Number(packageDays) : undefined, startedAt });
+    return response.json(toStatus(updated));
+  } catch (error) {
+    return response.status(404).json({ message: error instanceof Error ? error.message : "Unable to update member" });
+  }
+}
+export function removeMember(request: Request, response: Response) {
+  try {
+    const memberId = Array.isArray(request.params.memberId) ? request.params.memberId[0] : request.params.memberId;
+    const ok = deleteMember(memberId);
+    if (!ok) return response.status(404).json({ message: "Member not found" });
+    return response.json({ success: true });
+  } catch (error) {
+    return response.status(500).json({ message: error instanceof Error ? error.message : "Unable to delete member" });
   }
 }
 

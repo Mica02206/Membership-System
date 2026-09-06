@@ -94,8 +94,11 @@ const getExpiryDate = (member: { startedAt: string; packageDays: number }) => {
   });
 };
 
-const getPictureUrl = (pictureUrl?: string) =>
-  pictureUrl ? (pictureUrl.startsWith("http") ? pictureUrl : `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`) : "";
+const getPictureUrl = (pictureUrl?: string) => {
+  if (!pictureUrl) return "";
+  if (pictureUrl.startsWith("http") || pictureUrl.startsWith("data:")) return pictureUrl;
+  return `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`;
+};
 
 export default function KioskPage() {
   const [memberId, setMemberId] = useState("");

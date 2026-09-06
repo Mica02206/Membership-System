@@ -1,7 +1,7 @@
 import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
-import { createMember, checkMember, listMembers, renewMember, uploadMemberPicture } from "../controllers/memberController.js";
+import { createMember, checkMember, listMembers, renewMember, uploadMemberPicture, editMember, removeMember } from "../controllers/memberController.js";
 
 const storage = multer.diskStorage({
   destination: "uploads/",
@@ -19,6 +19,8 @@ memberRoutes.get("/:memberId/status", checkMember);
 memberRoutes.post("/", upload.single("picture"), createMember);
 memberRoutes.post("/:memberId/renew", renewMember);
 memberRoutes.post("/:memberId/picture", upload.single("picture"), uploadMemberPicture);
+memberRoutes.put("/:memberId", editMember);
+memberRoutes.delete("/:memberId", removeMember);
 
 
 

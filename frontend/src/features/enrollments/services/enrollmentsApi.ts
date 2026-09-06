@@ -47,3 +47,29 @@ export async function uploadMemberPictureApi(memberId: string, picture: File): P
   return response.json();
 }
 
+export async function editMemberApi(
+  memberId: string,
+  fields: { fullName?: string; contact?: string; address?: string; packageName?: string; packageDays?: number; startedAt?: string }
+): Promise<MemberStatus> {
+  const response = await fetch(`${API_URL}/members/${encodeURIComponent(memberId)}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(fields),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message ?? `Unable to update member ${memberId}`);
+  }
+  return response.json();
+}
+
+export async function deleteMemberApi(memberId: string): Promise<void> {
+  const response = await fetch(`${API_URL}/members/${encodeURIComponent(memberId)}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message ?? `Unable to delete member ${memberId}`);
+  }
+}
+

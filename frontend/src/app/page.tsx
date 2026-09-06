@@ -13,16 +13,19 @@ import {
   ShieldCheck,
   UserRoundPlus,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RegistrationForm } from "@/features/registration/components/RegistrationForm";
 import type { RegistrationForm as RegistrationFormData } from "@/features/registration/types/registration";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
+
+import type { MemberStatus } from "@/features/check-in/types/status";
 
 type RecentMember = { fullName: string; memberId: string; packageName: string; pictureUrl?: string };
 
 export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [recentMembers, setRecentMembers] = useState<RecentMember[]>([]);
+  const [dbMembers, setDbMembers] = useState<MemberStatus[]>([]);
   const [preview, setPreview] = useState<{
     form: RegistrationFormData;
     expiry: string;
@@ -38,6 +41,33 @@ export default function Home() {
     expiry: "",
   });
   const [previewPictureUrl, setPreviewPictureUrl] = useState("");
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const res = await fetch(`${API_URL}/members`);
+      if (res.ok) {
+        const data = (await res.json()) as MemberStatus[];
+        setDbMembers(data);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 10000);
+    return () => clearInterval(interval);
+  }, [fetchStats]);
+
+  const totalMembersCount = dbMembers.length;
+  const newMembersCount = useMemo(() => {
+    const todayStr = new Date().toDateString();
+    return dbMembers.filter(
+      (m) => new Date(m.member.startedAt).toDateString() === todayStr
+    ).length;
+  }, [dbMembers]);
+
   const handlePreviewChange = useCallback(
     (form: RegistrationFormData, expiry: string) =>
       setPreview({ form, expiry }),
@@ -52,18 +82,31 @@ export default function Home() {
     setPreviewPictureUrl(pictureUrl);
     return () => URL.revokeObjectURL(pictureUrl);
   }, [preview.form.picture]);
-  const handleRegistered = useCallback((form: RegistrationFormData) => {
-    const pictureUrl = form.picture ? URL.createObjectURL(form.picture) : undefined;
-    setRecentMembers((current) => [
-      {
-        fullName: form.fullName,
-        memberId: form.memberId,
-        packageName: form.packageName,
-        pictureUrl,
-      },
-      ...current,
-    ]);
-  }, []);
+  const handleRegistered = useCallback(
+    (form: RegistrationFormData, created?: any) => {
+      const API_URL =
+        process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+      const backendPic = created?.member?.pictureUrl;
+      const pictureUrl = backendPic
+        ? backendPic.startsWith("http")
+          ? backendPic
+          : `${API_URL.replace(/\/api\/?$/, "")}${backendPic}`
+        : form.picture
+          ? URL.createObjectURL(form.picture)
+          : undefined;
+      setRecentMembers((current) => [
+        {
+          fullName: form.fullName,
+          memberId: form.memberId,
+          packageName: form.packageName,
+          pictureUrl,
+        },
+        ...current,
+      ]);
+      fetchStats();
+    },
+    [fetchStats],
+  );
   return (
     <main className={`console-shell ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}>
       <aside className={`sidebar ${sidebarCollapsed ? "sidebar-collapsed" : ""}`}>
@@ -145,7 +188,7 @@ export default function Home() {
                 <span>
                   <small>New members</small>
                   <strong>
-                    42 <em>members</em>
+                    {newMembersCount} <em>members</em>
                   </strong>
                 </span>
               </div>
@@ -154,7 +197,7 @@ export default function Home() {
                 <span>
                   <small>Total members</small>
                   <strong>
-                    318 <em>members</em>
+                    {totalMembersCount} <em>members</em>
                   </strong>
                 </span>
               </div>
