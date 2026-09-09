@@ -8,6 +8,9 @@ export function getUserFacingError(error: unknown, fallback = "We couldn't compl
   if (detail) console.error(detail);
 
   const normalized = detail.toLowerCase();
+  if (normalized.includes("member_activity") && normalized.includes("duplicate key")) {
+    return "Check-in history is not configured yet. Please run the activity-history SQL setup in Supabase.";
+  }
   if (normalized.includes("duplicate key") || normalized.includes("members_member_id_key")) {
     return "This member ID is already registered. Please use a different member ID.";
   }

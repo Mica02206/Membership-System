@@ -889,7 +889,7 @@ export default function EnrollmentsPage() {
                     </span>
                     <div className="activity-history" aria-label="Check-in and check-out history">
                       <strong>Check-in / Check-out History</strong>
-                      {activityHistory.length > 0 ? activityHistory.map((activity, index) => (
+                      {activityHistory.length > 0 ? activityHistory.slice(0, 5).map((activity, index) => (
                         <div className="activity-history-row" key={`${activity.occurredAt}-${index}`}>
                           <span className={`activity-dot ${activity.action === "check-in" ? "check-in" : "check-out"}`} />
                           <span>
