@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { AuthGate } from "@/components/AuthGate";
 import "./globals.css";
 import "./feature-overrides.css";
 import "./credential-fix.css";
@@ -26,5 +27,6 @@ import "./enrollments/inspector-status.css";
 import "./enrollments/inspector-subscription.css";
 import "./enrollments/inspector-compact.css";
 import "./enrollments/spacing-fix.css";
+import "./body-fat/body-fat.css";
 export const metadata: Metadata = { title: "Memberly | Membership management" };
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body>{children}</body></html>; }
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) { return <html lang="en"><body><AuthGate>{children}</AuthGate></body></html>; }

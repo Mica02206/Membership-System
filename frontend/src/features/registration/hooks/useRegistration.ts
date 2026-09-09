@@ -14,7 +14,12 @@ export function useRegistration() {
       setMessage("Member profile created successfully");
       return created;
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Something went wrong");
+      const message = error instanceof Error
+        ? error.message
+        : typeof error === "object" && error !== null && "message" in error
+          ? String((error as { message: unknown }).message)
+          : "Something went wrong";
+      setMessage(message);
       return null;
     } finally {
       setLoading(false);

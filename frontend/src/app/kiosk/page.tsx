@@ -11,10 +11,11 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useCheckIn } from "@/features/check-in/hooks/useCheckIn";
+import { fetchMembers } from "@/features/enrollments/services/enrollmentsApi";
+import { getPictureUrl } from "@/lib/pictureUrl";
 import type { MemberStatus } from "@/features/check-in/types/status";
 
 const keypad = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "CLR"];
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 const FLOOR_CAPACITY = 50;
 const packageBenefits: Record<string, string[]> = {
   "Individual Student": [
@@ -105,11 +106,6 @@ const getExpiryDate = (member: { startedAt: string; packageDays: number }) => {
   });
 };
 
-const getPictureUrl = (pictureUrl?: string) => {
-  if (!pictureUrl) return "";
-  if (pictureUrl.startsWith("http") || pictureUrl.startsWith("data:")) return pictureUrl;
-  return `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`;
-};
 
 export default function KioskPage() {
   const [memberId, setMemberId] = useState("");
@@ -125,9 +121,7 @@ export default function KioskPage() {
     let mounted = true;
     const loadCapacity = async () => {
       try {
-        const response = await fetch(`${API_URL}/members`);
-        if (!response.ok) return;
-        const members = (await response.json()) as MemberStatus[];
+        const members = await fetchMembers();
         if (mounted) {
           setActiveMemberCount(members.filter((member) => member.status === "active").length);
         }

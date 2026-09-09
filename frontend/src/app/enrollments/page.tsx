@@ -24,6 +24,7 @@ import {
   X,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import type { MemberStatus } from "@/features/check-in/types/status";
 import {
   fetchMembers,
@@ -34,8 +35,9 @@ import {
   deleteMemberApi,
 } from "@/features/enrollments/services/enrollmentsApi";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { SignOutButton } from "@/components/SignOutButton";
+import { getPictureUrl } from "@/lib/pictureUrl";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
 const PAGE_SIZE = 6;
 const PACKAGE_OPTIONS = [
   "Individual Student",
@@ -58,22 +60,6 @@ const PACKAGE_PRICES: Record<string, string> = {
   "Barkada Group of 5 Student": "₱3,250",
   "Barkada Group 6+ Professional": "₱4,194",
   "Barkada Group 6+ Student": "₱3,600",
-};
-const PACKAGE_BENEFITS: Record<string, string[]> = {
-  "Individual Student": ["Free Trainer Assistance", "Experienced Coaches", "Clean & Safe Facility", "Top-Notch Equipment"],
-  "Individual Professional": ["Free Trainer Assistance", "Experienced Coaches", "Clean & Safe Facility", "Top-Notch Equipment"],
-  "Walk-in": ["Single session access", "Clean & Safe Facility", "Top-Notch Equipment"],
-  "Barkada Group of 3 Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-  "Barkada Group of 3 Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-  "Barkada Group of 5 Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-  "Barkada Group of 5 Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-  "Barkada Group 6+ Professional": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-  "Barkada Group 6+ Student": ["Free Body Fat Assessment", "Free Trainer Assistance", "Free Workout Program", "Unlimited Gym Access", "No Lock-in", "No Hidden Fees"],
-};
-const getPictureUrl = (pictureUrl?: string) => {
-  if (!pictureUrl) return "";
-  if (pictureUrl.startsWith("http") || pictureUrl.startsWith("data:")) return pictureUrl;
-  return `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`;
 };
 const getExpiryDate = (member: MemberStatus["member"]) => {
   const expiry = new Date(member.startedAt);
@@ -335,8 +321,44 @@ function DeleteConfirm({ item, onClose, onDeleted }: DeleteConfirmProps) {
   );
 }
 
+function BodyFatModal({ memberName, onClose }: { memberName: string; onClose: () => void }) {
+  const [weight, setWeight] = useState(70);
+  const [height, setHeight] = useState(170);
+  const [age, setAge] = useState(25);
+  const [sex, setSex] = useState<"male" | "female">("male");
+  const [result, setResult] = useState<{ bmi: number; bodyFat: number } | null>(null);
+
+  const calculate = (event: React.FormEvent) => {
+    event.preventDefault();
+    const bmi = weight / ((height / 100) ** 2);
+    const bodyFat = 1.2 * bmi + 0.23 * age - (sex === "male" ? 16.2 : 5.4);
+    setResult({ bmi, bodyFat: Math.max(0, bodyFat) });
+  };
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal-card" onClick={(event) => event.stopPropagation()} style={{ maxWidth: "460px" }}>
+        <div className="modal-heading">
+          <div><h2>Calculate Body Fat</h2><p>{memberName}</p></div>
+          <button type="button" onClick={onClose} aria-label="Close">×</button>
+        </div>
+        <form onSubmit={calculate} style={{ display: "grid", gap: "12px" }}>
+          <label>Weight (kg)<input type="number" min="1" step="0.1" value={weight} onChange={(event) => setWeight(Number(event.target.value))} required /></label>
+          <label>Height (cm)<input type="number" min="1" step="0.1" value={height} onChange={(event) => setHeight(Number(event.target.value))} required /></label>
+          <label>Age<input type="number" min="1" max="120" value={age} onChange={(event) => setAge(Number(event.target.value))} required /></label>
+          <label>Sex<select value={sex} onChange={(event) => setSex(event.target.value as "male" | "female")}><option value="male">Male</option><option value="female">Female</option></select></label>
+          <button type="submit" className="primary-action">Calculate</button>
+        </form>
+        {result && <div style={{ marginTop: "16px", padding: "14px", borderRadius: "8px", background: "#eff6ff" }}><strong>Estimated results</strong><div style={{ display: "flex", justifyContent: "space-between", marginTop: "8px" }}><span>BMI</span><b>{result.bmi.toFixed(1)}</b></div><div style={{ display: "flex", justifyContent: "space-between", marginTop: "5px" }}><span>Estimated body fat</span><b>{result.bodyFat.toFixed(1)}%</b></div></div>}
+        <p style={{ color: "#64748b", fontSize: "0.72rem", marginBottom: 0 }}>Estimate for reference only; not a clinical measurement.</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 export default function EnrollmentsPage() {
+  const router = useRouter();
   const [members, setMembers] = useState<MemberStatus[]>([]);
   const [selectedId, setSelectedId] = useState("");
   const [query, setQuery] = useState("");
@@ -352,6 +374,7 @@ export default function EnrollmentsPage() {
   const [actionMessage, setActionMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
   const [editTarget, setEditTarget] = useState<MemberStatus | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<MemberStatus | null>(null);
+  const [bodyFatOpen, setBodyFatOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -615,6 +638,7 @@ export default function EnrollmentsPage() {
         </div>
         <div className="side-footer">
           <span className="sync-line"><Cpu size={14} /> Auto-Sync Mode <b>Active</b></span>
+          <SignOutButton />
         </div>
       </aside>
 
@@ -836,14 +860,6 @@ export default function EnrollmentsPage() {
                     </div>
                   </div>
 
-                  <div className="inspector-perks">
-                    <small>Included Tier Perks</small>
-                    <div className="inspector-perk-grid">
-                      {(PACKAGE_BENEFITS[selected.member.packageName] ?? []).map((benefit) => (
-                        <span key={benefit}><ShieldCheck size={14} /> {benefit}</span>
-                      ))}
-                    </div>
-                  </div>
                   <div className="inspector-activity">
                     <div><small>Recent Turnstile Activity</small><ShieldCheck size={15} /></div>
                     <strong>
@@ -862,7 +878,7 @@ export default function EnrollmentsPage() {
                       <RefreshCw size={15} className={renewingId === selected.member.memberId ? "animate-spin" : ""} />{" "}
                       {renewingId === selected.member.memberId ? "Renewing..." : "Renew Pass"}
                     </button>
-                    <button type="button"><Eye size={15} /> Calculate Body Fat</button>
+                    <button type="button" onClick={() => router.push(`/body-fat?memberId=${encodeURIComponent(selected.member.memberId)}`)}><Eye size={15} /> Calculate Body Fat</button>
                   </div>
                 </>
               ) : (
@@ -872,6 +888,7 @@ export default function EnrollmentsPage() {
           </div>
         </section>
       </div>
+      {bodyFatOpen && selected && <BodyFatModal memberName={selected.member.fullName} onClose={() => setBodyFatOpen(false)} />}
     </main>
   );
 }

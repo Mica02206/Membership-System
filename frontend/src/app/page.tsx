@@ -16,16 +16,13 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { RegistrationForm } from "@/features/registration/components/RegistrationForm";
 import type { RegistrationForm as RegistrationFormData } from "@/features/registration/types/registration";
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
+import { SignOutButton } from "@/components/SignOutButton";
 
 import type { MemberStatus } from "@/features/check-in/types/status";
+import { fetchMembers } from "@/features/enrollments/services/enrollmentsApi";
+import { getPictureUrl } from "@/lib/pictureUrl";
 
 type RecentMember = { fullName: string; memberId: string; packageName: string; pictureUrl?: string; registeredAt?: string };
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
-const getPictureUrl = (pictureUrl?: string) => {
-  if (!pictureUrl) return "";
-  if (pictureUrl.startsWith("http") || pictureUrl.startsWith("data:")) return pictureUrl;
-  return `${API_URL.replace(/\/api\/?$/, "")}${pictureUrl}`;
-};
 
 export default function Home() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -50,9 +47,7 @@ export default function Home() {
 
   const fetchStats = useCallback(async () => {
     try {
-      const res = await fetch(`${API_URL}/members`);
-      if (res.ok) {
-        const data = (await res.json()) as MemberStatus[];
+        const data = await fetchMembers();
         setDbMembers(data);
         const today = new Date().toDateString();
         setRecentMembers(
@@ -66,7 +61,6 @@ export default function Home() {
               registeredAt: item.member.registeredAt,
             })),
         );
-      }
     } catch {}
   }, []);
 
@@ -151,6 +145,7 @@ export default function Home() {
           <span className="sync-line">
             <Cpu size={14} /> Auto-Sync Mode <b>Active</b>
           </span>
+          <SignOutButton />
         </div>
       </aside>
       <div className="console-content">
@@ -283,7 +278,14 @@ export default function Home() {
                           {member.memberId} · {member.packageName}
                         </small>
                       </div>
-                      <b className="added-pill">Just Added</b>
+                      <b className="added-pill">
+                        {member.registeredAt
+                          ? new Date(member.registeredAt).toLocaleTimeString([], {
+                              hour: "numeric",
+                              minute: "2-digit",
+                            })
+                          : "—"}
+                      </b>
                     </div>
                   ))
                 )}
