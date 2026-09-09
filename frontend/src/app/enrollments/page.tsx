@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { MemberStatus } from "@/features/check-in/types/status";
+import type { MemberActivity, MemberStatus } from "@/features/check-in/types/status";
 import {
   fetchMembers,
   fetchMemberStatus,
@@ -38,6 +38,7 @@ import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
 import { getPictureUrl } from "@/lib/pictureUrl";
 import { getUserFacingError } from "@/lib/userFacingError";
+import { fetchMemberActivityHistory } from "@/lib/memberData";
 
 const PAGE_SIZE = 6;
 const PACKAGE_OPTIONS = [
@@ -378,6 +379,7 @@ export default function EnrollmentsPage() {
   const [bodyFatOpen, setBodyFatOpen] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraError, setCameraError] = useState("");
+  const [activityHistory, setActivityHistory] = useState<MemberActivity[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -410,6 +412,18 @@ export default function EnrollmentsPage() {
       streamRef.current?.getTracks().forEach((track) => track.stop());
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!selectedId) {
+      setActivityHistory([]);
+      return;
+    }
+    fetchMemberActivityHistory(selectedId)
+      .then((history) => { if (!cancelled) setActivityHistory(history); })
+      .catch(() => { if (!cancelled) setActivityHistory([]); });
+    return () => { cancelled = true; };
+  }, [selectedId]);
 
   const startCamera = async () => {
     setCameraError("");
@@ -873,6 +887,18 @@ export default function EnrollmentsPage() {
                         ? getActivityTime(selected.lastActivity.occurredAt)
                         : "Activity will appear after the next kiosk check-in or check-out."}
                     </span>
+                    <div className="activity-history" aria-label="Check-in and check-out history">
+                      <strong>Check-in / Check-out History</strong>
+                      {activityHistory.length > 0 ? activityHistory.map((activity, index) => (
+                        <div className="activity-history-row" key={`${activity.occurredAt}-${index}`}>
+                          <span className={`activity-dot ${activity.action === "check-in" ? "check-in" : "check-out"}`} />
+                          <span>
+                            <b>{activity.action === "check-in" ? "Checked in" : "Checked out"} · {activity.station}</b>
+                            <small>{getActivityTime(activity.occurredAt)}</small>
+                          </span>
+                        </div>
+                      )) : <small>No check-in or check-out history yet.</small>}
+                    </div>
                   </div>
                   <div className="inspector-actions">
                     <button type="button" disabled={renewingId === selected.member.memberId} onClick={() => handleRenewPass(selected.member.memberId)}>

@@ -1,5 +1,5 @@
 import { supabase } from "./supabase";
-import type { MemberStatus } from "@/features/check-in/types/status";
+import type { MemberActivity, MemberStatus } from "@/features/check-in/types/status";
 
 type MemberRow = {
   id: string; member_id: string; full_name: string; contact: string; address: string;
@@ -22,9 +22,13 @@ const toStatus = (row: MemberRow, activity?: ActivityRow): MemberStatus => {
 };
 
 async function activitiesByMember() {
-  const { data, error } = await supabase.from("member_activity").select("member_id, action, station, occurred_at");
+  const { data, error } = await supabase.from("member_activity").select("member_id, action, station, occurred_at").order("occurred_at", { ascending: false });
   if (error) throw error;
-  return new Map((data as ActivityRow[]).map((item) => [item.member_id, item]));
+  const latest = new Map<string, ActivityRow>();
+  for (const item of data as ActivityRow[]) {
+    if (!latest.has(item.member_id)) latest.set(item.member_id, item);
+  }
+  return latest;
 }
 
 export async function fetchMemberStatuses(): Promise<MemberStatus[]> {
@@ -49,9 +53,15 @@ export async function fetchMemberStatusDirect(memberId: string): Promise<MemberS
 export async function recordMemberActivityDirect(memberId: string, action: "check-in" | "check-out") {
   const current = await fetchMemberStatusDirect(memberId);
   if (current.status === "expired") throw new Error("Membership expired. Check-in and check-out are unavailable.");
-  const { error } = await supabase.from("member_activity").upsert({ member_id: current.member.memberId, action, station: "Kiosk", occurred_at: new Date().toISOString() });
+  const { error } = await supabase.from("member_activity").insert({ member_id: current.member.memberId, action, station: "Kiosk", occurred_at: new Date().toISOString() });
   if (error) throw error;
   return fetchMemberStatusDirect(current.member.memberId);
+}
+
+export async function fetchMemberActivityHistory(memberId: string): Promise<MemberActivity[]> {
+  const { data, error } = await supabase.from("member_activity").select("action, station, occurred_at").eq("member_id", memberId.trim().toUpperCase()).order("occurred_at", { ascending: false });
+  if (error) throw error;
+  return (data as ActivityRow[]).map((row) => ({ action: row.action, station: row.station, occurredAt: row.occurred_at }));
 }
 
 export async function renewMemberPassDirect(memberId: string, days?: number) {
