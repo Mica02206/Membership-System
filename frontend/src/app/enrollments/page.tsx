@@ -37,6 +37,7 @@ import {
 import { ThemeToggle } from "@/shared/components/ThemeToggle";
 import { SignOutButton } from "@/components/SignOutButton";
 import { getPictureUrl } from "@/lib/pictureUrl";
+import { getUserFacingError } from "@/lib/userFacingError";
 
 const PAGE_SIZE = 6;
 const PACKAGE_OPTIONS = [
@@ -107,7 +108,7 @@ function EditModal({ item, onClose, onSaved }: EditModalProps) {
       });
       onSaved(updated);
     } catch (error) {
-      setErr(error instanceof Error ? error.message : "Failed to save changes");
+      setErr(getUserFacingError(error, "We couldn't save the member changes. Please try again."));
     } finally {
       setSaving(false);
     }
@@ -258,7 +259,7 @@ function DeleteConfirm({ item, onClose, onDeleted }: DeleteConfirmProps) {
       await deleteMemberApi(item.member.memberId);
       onDeleted(item.member.memberId);
     } catch (error) {
-      setErr(error instanceof Error ? error.message : "Failed to delete member");
+      setErr(getUserFacingError(error, "We couldn't remove this member. Please try again."));
       setDeleting(false);
     }
   };
@@ -389,7 +390,7 @@ export default function EnrollmentsPage() {
       setSelectedId((current) => current || data[0]?.member.memberId || "");
     } catch (loadError) {
       if (showLoading) {
-        setError(loadError instanceof Error ? loadError.message : "Unable to load members");
+        setError(getUserFacingError(loadError, "We couldn't load the member list. Please refresh and try again."));
       }
     } finally {
       if (showLoading) setLoading(false);

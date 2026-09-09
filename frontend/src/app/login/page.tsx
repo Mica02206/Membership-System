@@ -4,6 +4,7 @@ import { FormEvent, useState } from "react";
 import { LockKeyhole, LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { getUserFacingError } from "@/lib/userFacingError";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function LoginPage() {
     setError("");
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      setError(signInError.message);
+      setError(getUserFacingError(signInError, "We couldn't sign you in. Please try again."));
       setLoading(false);
       return;
     }

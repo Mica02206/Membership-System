@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { registerMember } from "../services/registrationApi";
 import type { RegistrationForm } from "../types/registration";
+import { getUserFacingError } from "@/lib/userFacingError";
 export function useRegistration() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -14,12 +15,7 @@ export function useRegistration() {
       setMessage("Member profile created successfully");
       return created;
     } catch (error) {
-      const message = error instanceof Error
-        ? error.message
-        : typeof error === "object" && error !== null && "message" in error
-          ? String((error as { message: unknown }).message)
-          : "Something went wrong";
-      setMessage(message);
+      setMessage(getUserFacingError(error, "We couldn't register this member. Please check the details and try again."));
       return null;
     } finally {
       setLoading(false);
