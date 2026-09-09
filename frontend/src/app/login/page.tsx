@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { LockKeyhole, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { getUserFacingError } from "@/lib/userFacingError";
@@ -40,7 +40,6 @@ export default function LoginPage() {
           {error && <div className="auth-error">{error}</div>}
           <button type="submit" disabled={loading}><LogIn size={16} /> {loading ? "Signing in…" : "Sign in"}</button>
         </form>
-        <small><LockKeyhole size={13} /> Staff accounts are managed in Supabase Authentication.</small>
       </section>
     </main>
   );
