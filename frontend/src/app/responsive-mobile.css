@@ -1,0 +1,37 @@
+@media (max-width: 720px) {
+  .console-main,
+  .directory-main { width: 100%; max-width: 100%; }
+  .registration-layout,
+  .registration-column,
+  .context-column,
+  .form-panels,
+  .form-card { min-width: 0; width: 100%; }
+  .registration-column { padding: 18px; }
+  .page-intro h1 { overflow-wrap: anywhere; }
+  .page-intro p { max-width: 100%; }
+  .quick-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .quick-stats > div { min-width: 0; padding: 9px 10px; }
+  .form-actions { width: 100%; }
+  .form-actions .primary-button { min-width: 0; }
+}
+
+@media (max-width: 420px) {
+  .console-main { padding: 20px 12px; }
+  .side-brand { padding: 0 14px; }
+  .side-brand strong { font-size: 14px; }
+  .system-card { margin-left: 12px; margin-right: 12px; }
+  .registration-column { padding: 14px; border-radius: 9px; }
+  .page-intro h1 { font-size: 23px; }
+  .page-intro p { font-size: 10px; line-height: 1.25; }
+  .quick-stats strong { font-size: 14px; }
+  .quick-stats small { font-size: 8px; }
+  .form-card-heading { gap: 8px; margin-bottom: 14px; }
+  .form-card-heading h2 { font-size: 11px; }
+  .form-card-heading > span { font-size: 8px; }
+  .photo-actions { width: 100%; }
+  .photo-actions label,
+  .photo-actions button { flex: 1; justify-content: center; min-width: 0; padding: 8px 5px; font-size: 8px; }
+  .form-actions { gap: 6px; padding: 10px; }
+  .form-actions .secondary-button { flex: 1; min-width: 0; padding: 9px 5px; font-size: 9px; }
+  .form-actions .primary-button { flex-basis: 100%; justify-content: center; min-height: 40px; padding: 0 8px; font-size: 10px; }
+}

@@ -24,6 +24,7 @@ import "./enrollments/enrollments.css";
 import "./enrollments/roster-reference.css";
 import "./enrollments/inspector-reference.css";
 import "./enrollments/activity-history.css";
+import "./responsive-mobile.css";
 import "./enrollments/inspector-status.css";
 import "./enrollments/inspector-subscription.css";
 import "./enrollments/inspector-compact.css";
