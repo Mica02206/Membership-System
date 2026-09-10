@@ -8,14 +8,14 @@ import { fetchMembers } from "@/features/enrollments/services/enrollmentsApi";
 export default function BodyFatPage() {
   const [memberId, setMemberId] = useState("");
   const [members, setMembers] = useState<MemberStatus[]>([]);
-  const [weight, setWeight] = useState(58.4);
-  const [height, setHeight] = useState(168);
-  const [age, setAge] = useState(28);
-  const [sex, setSex] = useState<"female" | "male">("female");
-  const [neck, setNeck] = useState(32.5);
-  const [waist, setWaist] = useState(68);
-  const [hip, setHip] = useState(94);
-  const [calipers, setCalipers] = useState({ chestLeft: 12, chestRight: 12, midaxillaryLeft: 12, midaxillaryRight: 12, tricepsLeft: 18, tricepsRight: 18, subscapularLeft: 16, subscapularRight: 16, abdomenLeft: 20, abdomenRight: 20, suprailiacLeft: 15, suprailiacRight: 15, thighLeft: 22, thighRight: 22 });
+  const [weightInput, setWeightInput] = useState<number | "">("");
+  const [heightInput, setHeightInput] = useState<number | "">("");
+  const [ageInput, setAgeInput] = useState<number | "">("");
+  const [sex, setSex] = useState<"female" | "male" | "">("");
+  const [neckInput, setNeckInput] = useState<number | "">("");
+  const [waistInput, setWaistInput] = useState<number | "">("");
+  const [hipInput, setHipInput] = useState<number | "">("");
+  const [calipers, setCalipers] = useState<Record<string, number | "">>({ chestLeft: "", chestRight: "", midaxillaryLeft: "", midaxillaryRight: "", tricepsLeft: "", tricepsRight: "", subscapularLeft: "", subscapularRight: "", abdomenLeft: "", abdomenRight: "", suprailiacLeft: "", suprailiacRight: "", thighLeft: "", thighRight: "" });
   const [calculated, setCalculated] = useState(false);
   const [today, setToday] = useState("—");
 
@@ -28,15 +28,29 @@ export default function BodyFatPage() {
   }, []);
 
   const member = useMemo(() => members.find((item) => item.member.memberId === memberId) ?? members[0], [memberId, members]);
-  const bmi = weight / ((height / 100) ** 2);
-  const bodyFat = sex === "male"
-    ? 495 / (1.0324 - 0.19077 * Math.log10(Math.max(waist - neck, 1)) + 0.15456 * Math.log10(height)) - 450
-    : 495 / (1.29579 - 0.35004 * Math.log10(Math.max(waist + hip - neck, 1)) + 0.221 * Math.log10(height)) - 450;
-  const fatMass = weight * Math.max(bodyFat, 0) / 100;
-  const leanMass = weight - fatMass;
-  const calculate = (event: React.FormEvent) => { event.preventDefault(); setCalculated(true); };
+  const weight = Number(weightInput);
+  const height = Number(heightInput);
+  const age = Number(ageInput);
+  const neck = Number(neckInput);
+  const waist = Number(waistInput);
+  const hip = Number(hipInput);
+  const hasInputs = sex !== "" && [weightInput, heightInput, ageInput, neckInput, waistInput, hipInput, ...Object.values(calipers)].every((value) => value !== "" && Number(value) > 0);
+  const numericWeight = weight;
+  const numericHeight = height;
+  const numericAge = age;
+  const numericNeck = neck;
+  const numericWaist = waist;
+  const numericHip = hip;
+  const bmi = hasInputs ? numericWeight / ((numericHeight / 100) ** 2) : 0;
+  const bodyFat = hasInputs ? (sex === "male"
+    ? 495 / (1.0324 - 0.19077 * Math.log10(Math.max(numericWaist - numericNeck, 1)) + 0.15456 * Math.log10(numericHeight)) - 450
+    : 495 / (1.29579 - 0.35004 * Math.log10(Math.max(numericWaist + numericHip - numericNeck, 1)) + 0.221 * Math.log10(numericHeight)) - 450) : 0;
+  const fatMass = numericWeight * Math.max(bodyFat, 0) / 100;
+  const leanMass = numericWeight - fatMass;
+  const outputReady = calculated && hasInputs;
+  const calculate = (event: React.FormEvent) => { event.preventDefault(); if (hasInputs) setCalculated(true); };
   const setCaliper = (key: keyof typeof calipers) => (event: React.ChangeEvent<HTMLInputElement>) =>
-    setCalipers((current) => ({ ...current, [key]: Number(event.target.value) }));
+    setCalipers((current) => ({ ...current, [key]: event.target.value === "" ? "" : Number(event.target.value) }));
   const exportCsv = () => {
     const csv = `Assessment Date,Member,Scale Mass,Body Fat %,Lean Mass (LBM)\n${today},${member?.member.fullName ?? "Member"},${weight.toFixed(1)} kg,${bodyFat.toFixed(1)}%,${leanMass.toFixed(1)} kg`;
     const link = document.createElement("a");
@@ -57,10 +71,10 @@ export default function BodyFatPage() {
       <section className="body-fat-grid">
         <form className="assessment-card" onSubmit={calculate}>
           <div className="assessment-card-heading"><div><small>MEMBER MEASUREMENTS</small><h2>Body composition inputs</h2></div><b>Metric (cm / kg)</b></div>
-          <div className="field-grid two"><label>Gender profile<select value={sex} onChange={(event) => setSex(event.target.value as "female" | "male")}><option value="female">♀ Female</option><option value="male">♂ Male</option></select></label><label>Age (years)<input type="number" min="1" max="120" value={age} onChange={(event) => setAge(Number(event.target.value))} /><em>yrs</em></label></div>
-          <div className="field-grid two"><label>Height (standing)<input type="number" min="1" step="0.1" value={height} onChange={(event) => setHeight(Number(event.target.value))} /><em>cm</em></label><label>Current body mass<input type="number" min="1" step="0.1" value={weight} onChange={(event) => setWeight(Number(event.target.value))} /><em>kg</em></label></div>
-          <div className="field-grid two"><label>Neck circumference<input type="number" min="1" step="0.1" value={neck} onChange={(event) => setNeck(Number(event.target.value))} /><em>cm</em></label><label>Waist circumference<input type="number" min="1" step="0.1" value={waist} onChange={(event) => setWaist(Number(event.target.value))} /><em>cm</em></label></div>
-          <div className="field-grid one"><label>Hip circumference<input type="number" min="1" step="0.1" value={hip} onChange={(event) => setHip(Number(event.target.value))} /><em>cm</em></label></div>
+          <div className="field-grid two"><label>Gender profile<select value={sex} onChange={(event) => setSex(event.target.value as "female" | "male" | "")}><option value="">Select gender</option><option value="female">♀ Female</option><option value="male">♂ Male</option></select></label><label>Age (years)<input type="number" min="1" max="120" value={ageInput} onChange={(event) => setAgeInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>yrs</em></label></div>
+          <div className="field-grid two"><label>Height (standing)<input type="number" min="1" step="0.1" value={heightInput} onChange={(event) => setHeightInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>cm</em></label><label>Current body mass<input type="number" min="1" step="0.1" value={weightInput} onChange={(event) => setWeightInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>kg</em></label></div>
+          <div className="field-grid two"><label>Neck circumference<input type="number" min="1" step="0.1" value={neckInput} onChange={(event) => setNeckInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>cm</em></label><label>Waist circumference<input type="number" min="1" step="0.1" value={waistInput} onChange={(event) => setWaistInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>cm</em></label></div>
+          <div className="field-grid one"><label>Hip circumference<input type="number" min="1" step="0.1" value={hipInput} onChange={(event) => setHipInput(event.target.value === "" ? "" : Number(event.target.value))} /><em>cm</em></label></div>
           <div className="caliper-section"><div className="caliper-heading"><span>SKINFOLD CALIPER MEASUREMENTS</span><small>Jackson-Pollock 7-site · left and right · millimeters</small></div><div className="field-grid two"><label>Chest — left<input type="number" min="0" step="0.1" value={calipers.chestLeft} onChange={setCaliper("chestLeft")} /><em>mm</em></label><label>Chest — right<input type="number" min="0" step="0.1" value={calipers.chestRight} onChange={setCaliper("chestRight")} /><em>mm</em></label><label>Midaxillary — left<input type="number" min="0" step="0.1" value={calipers.midaxillaryLeft} onChange={setCaliper("midaxillaryLeft")} /><em>mm</em></label><label>Midaxillary — right<input type="number" min="0" step="0.1" value={calipers.midaxillaryRight} onChange={setCaliper("midaxillaryRight")} /><em>mm</em></label><label>Triceps — left<input type="number" min="0" step="0.1" value={calipers.tricepsLeft} onChange={setCaliper("tricepsLeft")} /><em>mm</em></label><label>Triceps — right<input type="number" min="0" step="0.1" value={calipers.tricepsRight} onChange={setCaliper("tricepsRight")} /><em>mm</em></label><label>Subscapular — left<input type="number" min="0" step="0.1" value={calipers.subscapularLeft} onChange={setCaliper("subscapularLeft")} /><em>mm</em></label><label>Subscapular — right<input type="number" min="0" step="0.1" value={calipers.subscapularRight} onChange={setCaliper("subscapularRight")} /><em>mm</em></label><label>Abdominal — left<input type="number" min="0" step="0.1" value={calipers.abdomenLeft} onChange={setCaliper("abdomenLeft")} /><em>mm</em></label><label>Abdominal — right<input type="number" min="0" step="0.1" value={calipers.abdomenRight} onChange={setCaliper("abdomenRight")} /><em>mm</em></label><label>Suprailiac — left<input type="number" min="0" step="0.1" value={calipers.suprailiacLeft} onChange={setCaliper("suprailiacLeft")} /><em>mm</em></label><label>Suprailiac — right<input type="number" min="0" step="0.1" value={calipers.suprailiacRight} onChange={setCaliper("suprailiacRight")} /><em>mm</em></label><label>Thigh — left<input type="number" min="0" step="0.1" value={calipers.thighLeft} onChange={setCaliper("thighLeft")} /><em>mm</em></label><label>Thigh — right<input type="number" min="0" step="0.1" value={calipers.thighRight} onChange={setCaliper("thighRight")} /><em>mm</em></label></div></div>
           <div className="assessment-note">⚠ Standardized tape tension notice<br /><small>Apply constant 0.5 lb spring tension. Take three non-consecutive readings per site and average the result.</small></div>
           <button className="calculate-button" type="submit"><Calculator size={16} /> Calculate Biometrics &amp; Recomposition Stats</button>
