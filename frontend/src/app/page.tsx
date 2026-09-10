@@ -199,6 +199,7 @@ export default function Home() {
               <RegistrationForm
                 onPreviewChange={handlePreviewChange}
                 onRegistered={handleRegistered}
+                existingMembers={dbMembers}
               />
             </div>
             <aside className="context-column">

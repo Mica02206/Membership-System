@@ -13,6 +13,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRegistration } from "../hooks/useRegistration";
 import type { RegistrationForm as Form } from "../types/registration";
+import type { MemberStatus } from "@/features/check-in/types/status";
 
 const plans = [
   {
@@ -130,11 +131,13 @@ const plans = [
 type RegistrationFormProps = {
   onPreviewChange?: (form: Form, expiry: string) => void;
   onRegistered?: (form: Form, created?: any) => void;
+  existingMembers?: MemberStatus[];
 };
 
 export function RegistrationForm({
   onPreviewChange,
   onRegistered,
+  existingMembers = [],
 }: RegistrationFormProps) {
   const { loading, message, submit } = useRegistration();
   const [form, setForm] = useState<Form>({
@@ -155,6 +158,12 @@ export function RegistrationForm({
     setForm((current) => ({ ...current, [key]: value }));
   const selectedPlan =
     plans.find((plan) => plan.name === form.packageName) ?? plans[0];
+  const previousMember = existingMembers.find(
+    (item) => item.member.contact.replace(/\D/g, "") === form.contact.replace(/\D/g, ""),
+  );
+  const previouslyUsedGroupPackage = Boolean(
+    previousMember && !previousMember.member.packageName.startsWith("Individual") && previousMember.member.packageName !== "Walk-in",
+  );
   const expiry = useMemo(() => {
     const date = new Date(registeredAt);
     date.setDate(date.getDate() + Math.max(1, Number(form.packageDays) || 1));
@@ -242,12 +251,21 @@ export function RegistrationForm({
   };
   const selectPlan = (name: string) => {
     const plan = plans.find((item) => item.name === name) ?? plans[0];
+    const isGroupPackage = name.startsWith("Barkada Group");
+    const individualPlan = name.endsWith("Professional") ? plans.find((item) => item.name === "Individual Professional")! : plans[0];
+    const finalPlan = previouslyUsedGroupPackage && isGroupPackage ? individualPlan : plan;
     setForm((current) => ({
       ...current,
-      packageName: plan.name,
-      packageDays: String(plan.duration),
+      packageName: finalPlan.name,
+      packageDays: String(finalPlan.duration),
     }));
   };
+  useEffect(() => {
+    if (!previouslyUsedGroupPackage || !form.packageName.startsWith("Barkada Group")) return;
+    const individualName = form.packageName.endsWith("Professional") ? "Individual Professional" : "Individual Student";
+    const individualPlan = plans.find((plan) => plan.name === individualName)!;
+    setForm((current) => ({ ...current, packageName: individualPlan.name, packageDays: String(individualPlan.duration) }));
+  }, [form.contact, form.packageName, previouslyUsedGroupPackage]);
   const regenerate = () =>
     update("memberId", `AM-${Math.floor(10000 + Math.random() * 90000)}`);
   const copyId = () => navigator.clipboard?.writeText(form.memberId);
@@ -394,6 +412,9 @@ export function RegistrationForm({
               ))}
             </select>
           </label>
+          {previouslyUsedGroupPackage && (
+            <p className="package-warning">This member has already used a group package. Individual pricing applies to this enrollment.</p>
+          )}
           <div className="duration-heading">
             <label>Package Duration (Days)</label>
             <small>(Automatically set by package, editable)</small>
