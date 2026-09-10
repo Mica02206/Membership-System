@@ -68,7 +68,10 @@ export async function renewMemberPassDirect(memberId: string, days?: number) {
   const current = await fetchMemberStatusDirect(memberId);
   const expiry = new Date(new Date(current.member.startedAt).getTime() + current.member.packageDays * 86400000);
   const startedAt = new Date(Math.max(Date.now(), expiry.getTime())).toISOString();
-  const { error } = await supabase.from("members").update({ started_at: startedAt, package_days: days && days > 0 ? Math.floor(days) : current.member.packageDays }).eq("member_id", current.member.memberId);
+  const packageName = current.member.packageName.startsWith("Barkada Group")
+    ? current.member.packageName.endsWith("Professional") ? "Individual Professional" : "Individual Student"
+    : current.member.packageName;
+  const { error } = await supabase.from("members").update({ package_name: packageName, started_at: startedAt, package_days: days && days > 0 ? Math.floor(days) : current.member.packageDays }).eq("member_id", current.member.memberId);
   if (error) throw error;
   return fetchMemberStatusDirect(current.member.memberId);
 }
